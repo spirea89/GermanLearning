@@ -3,12 +3,14 @@
 export const dynamic = 'force-static';
 
 import { useEffect, useMemo, useState } from 'react';
-import { BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight, CircleHelp, Clock3, Cloud, MoreHorizontal, Plus, Settings, Sparkles, Trash2 } from 'lucide-react';
+import { BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight, CircleHelp, Clock3, Cloud, LogIn, LogOut, MoreHorizontal, Plus, Settings, Sparkles, Trash2 } from 'lucide-react';
+import type { User } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { supabase } from '@/lib/supabase';
 
-const APP_VERSION = '0.1.1';
+const APP_VERSION = '0.2.0';
 const STORAGE_KEY = 'lernzeit-blockers-v1';
 type Blocker = { id: string; name: string; day: number; start: string; end: string; kind: 'learning' | 'busy' };
 const DAYS = [{ name: 'Mon', date: '7' }, { name: 'Tue', date: '8' }, { name: 'Wed', date: '9' }, { name: 'Thu', date: '10' }, { name: 'Fri', date: '11' }, { name: 'Sat', date: '12' }, { name: 'Sun', date: '13' }];
@@ -36,9 +38,33 @@ export default function Home() {
   const [start, setStart] = useState('17:00');
   const [end, setEnd] = useState('18:00');
   const [notice, setNotice] = useState('');
+  const [user, setUser] = useState<User | null>(null);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authMessage, setAuthMessage] = useState('');
+  const [authBusy, setAuthBusy] = useState(false);
 
   useEffect(() => { const saved = window.localStorage.getItem(STORAGE_KEY); if (saved) { try { setBlockers(JSON.parse(saved)); } catch { /* keep starter plan */ } } }, []);
   useEffect(() => { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(blockers)); }, [blockers]);
+  useEffect(() => {
+    void supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
+    return () => data.subscription.unsubscribe();
+  }, []);
+  useEffect(() => {
+    if (!user) return;
+    const weekStart = new Date('2026-09-07T00:00:00+02:00');
+    const weekEnd = new Date('2026-09-14T00:00:00+02:00');
+    void supabase.from('learning_blocks').select('*').gte('starts_at', weekStart.toISOString()).lt('starts_at', weekEnd.toISOString()).order('starts_at').then(({ data }) => {
+      if (!data?.length) return;
+      setBlockers(data.map((row) => {
+        const starts = new Date(row.starts_at); const ends = new Date(row.ends_at);
+        return { id: row.id, name: row.title, day: (starts.getDay() + 6) % 7, start: starts.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }), end: ends.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }), kind: row.kind } as Blocker;
+      }));
+    });
+  }, [user]);
   useEffect(() => {
     const context = (document as Document & { modelContext?: { registerTool?: (...args: unknown[]) => unknown } }).modelContext;
     if (!context?.registerTool) return;
@@ -57,13 +83,35 @@ export default function Home() {
     return () => lifecycle.abort();
   }, []);
   const learningHours = useMemo(() => blockers.filter((item) => item.kind === 'learning').reduce((total, item) => total + (minutes(item.end) - minutes(item.start)) / 60, 0), [blockers]);
-  function addBlocker() { if (!name.trim() || minutes(end) <= minutes(start)) { setNotice('Choose a name and an end time after the start time.'); return; } setBlockers((current) => [...current, { id: crypto.randomUUID(), name: name.trim(), day: selectedDay, start, end, kind: 'learning' }]); setAddOpen(false); setNotice(''); }
+  async function addBlocker() {
+    if (!name.trim() || minutes(end) <= minutes(start)) { setNotice('Choose a name and an end time after the start time.'); return; }
+    const local: Blocker = { id: crypto.randomUUID(), name: name.trim(), day: selectedDay, start, end, kind: 'learning' };
+    if (user) {
+      const date = 7 + selectedDay;
+      const { data, error } = await supabase.from('learning_blocks').insert({ user_id: user.id, title: local.name, starts_at: `2026-09-${String(date).padStart(2, '0')}T${start}:00+02:00`, ends_at: `2026-09-${String(date).padStart(2, '0')}T${end}:00+02:00`, kind: 'learning', source: 'manual' }).select('id').single();
+      if (error) { setNotice(error.message); return; }
+      local.id = data.id;
+    }
+    setBlockers((current) => [...current, local]); setAddOpen(false); setNotice('');
+  }
+  async function removeBlocker(item: Blocker) {
+    if (user && !item.id.startsWith('sample-')) await supabase.from('learning_blocks').delete().eq('id', item.id);
+    setBlockers((current) => current.filter((entry) => entry.id !== item.id));
+  }
+  async function submitAuth() {
+    setAuthBusy(true); setAuthMessage('');
+    const result = authMode === 'signin' ? await supabase.auth.signInWithPassword({ email, password }) : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: 'https://spirea89.github.io/GermanLearning/' } });
+    setAuthBusy(false);
+    if (result.error) { setAuthMessage(result.error.message); return; }
+    if (authMode === 'signup' && !result.data.session) { setAuthMessage('Check your email to confirm your account.'); return; }
+    setAuthOpen(false); setPassword('');
+  }
 
   return <main className="min-h-screen bg-[#f5f7f2] text-[#17221b]">
     <header className="border-b border-[#dce3d9] bg-white/90 px-5 py-3 backdrop-blur md:px-8"><div className="mx-auto flex max-w-[1500px] items-center justify-between">
       <div className="flex items-center gap-3"><div className="grid size-9 place-items-center rounded-xl bg-[#1f6f4a] text-white"><BookOpen size={19} /></div><div><p className="font-semibold leading-tight tracking-[-0.02em]">Lernzeit</p><p className="text-[11px] text-[#718077]">German, one day at a time</p></div></div>
       <nav className="hidden items-center gap-2 rounded-xl bg-[#edf3ec] p-1 md:flex" aria-label="Main navigation"><button className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium shadow-sm"><CalendarDays size={16} />Learning plan</button><button className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-[#718077]" disabled><Sparkles size={16} />Practice</button></nav>
-      <div className="flex items-center gap-2"><button aria-label="Help" className="grid size-9 place-items-center rounded-lg text-[#718077] hover:bg-[#edf3ec]"><CircleHelp size={18} /></button><button aria-label="Settings" className="grid size-9 place-items-center rounded-lg text-[#718077] hover:bg-[#edf3ec]"><Settings size={18} /></button><div className="grid size-9 place-items-center rounded-full bg-[#e5b66b] text-sm font-semibold text-[#442c0c]">MS</div></div>
+      <div className="flex items-center gap-2"><button aria-label="Help" className="grid size-9 place-items-center rounded-lg text-[#718077] hover:bg-[#edf3ec]"><CircleHelp size={18} /></button><button aria-label="Settings" className="hidden size-9 place-items-center rounded-lg text-[#718077] hover:bg-[#edf3ec] sm:grid"><Settings size={18} /></button>{user ? <Button variant="outline" className="max-w-48" onClick={() => void supabase.auth.signOut()}><LogOut /><span className="hidden truncate sm:inline">{user.email}</span><span className="sm:hidden">Sign out</span></Button> : <Button variant="outline" onClick={() => setAuthOpen(true)}><LogIn />Sign in</Button>}</div>
     </div></header>
     <section className="mx-auto max-w-[1500px] px-5 py-8 md:px-8">
       <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#3c805d]">Your weekly rhythm</p><h1 className="text-3xl font-semibold tracking-[-0.035em] md:text-4xl">Learning Plan</h1><p className="mt-2 max-w-xl text-sm text-[#66736b]">Make space for German around the life you already have.</p></div><Button onClick={() => setAddOpen(true)} className="h-11 rounded-xl bg-[#1f6f4a] px-4 hover:bg-[#185c3d]"><Plus /> Add learning time</Button></div>
@@ -74,7 +122,7 @@ export default function Home() {
             <div className="grid grid-cols-[64px_repeat(7,1fr)] border-b border-[#e3e8e0]"><div />{DAYS.map((day, index) => <div key={day.name} className={`border-l border-[#e8ece6] py-3 text-center ${index === 0 ? 'bg-[#f0f7f2]' : ''}`}><p className="text-[11px] font-medium uppercase tracking-wider text-[#718077]">{day.name}</p><p className={`mx-auto mt-1 grid size-8 place-items-center rounded-full text-sm font-semibold ${index === 0 ? 'bg-[#1f6f4a] text-white' : ''}`}>{day.date}</p></div>)}</div>
             <div className="relative grid h-[660px] grid-cols-[64px_repeat(7,1fr)] bg-[linear-gradient(to_bottom,transparent_59px,#e8ece6_60px)] bg-[size:100%_60px]">
               <div className="relative">{Array.from({ length: 11 }, (_, i) => <span key={i} className="absolute right-3 -translate-y-2 text-[10px] text-[#8a968e]" style={{ top: i * 60 }}>{`${8 + i}:00`}</span>)}</div>
-              {DAYS.map((day, dayIndex) => <div key={day.name} className={`relative border-l border-[#e8ece6] ${dayIndex === 0 ? 'bg-[#f0f7f2]/55' : ''}`} onDoubleClick={() => { setSelectedDay(dayIndex); setAddOpen(true); }}>{blockers.filter((item) => item.day === dayIndex).map((item) => { const top = ((minutes(item.start) - 480) / 60) * 60; const height = Math.max(((minutes(item.end) - minutes(item.start)) / 60) * 60, 34); return <button key={item.id} title="Click to remove" onClick={() => setBlockers((current) => current.filter((entry) => entry.id !== item.id))} className={`group absolute left-1.5 right-1.5 overflow-hidden rounded-lg border px-2 py-1.5 text-left transition hover:brightness-95 ${item.kind === 'learning' ? 'border-[#91c3a5] bg-[#dff2e5] text-[#155838]' : 'border-[#d5dcd7] bg-[#eef1ef] text-[#5e6962]'}`} style={{ top, height }}><span className="block truncate text-[11px] font-semibold">{item.name}</span><span className="block text-[9px] opacity-70">{formatTime(item.start)}–{formatTime(item.end)}</span><Trash2 className="absolute right-1.5 top-1.5 hidden size-3 group-hover:block" /></button>; })}</div>)}
+              {DAYS.map((day, dayIndex) => <div key={day.name} className={`relative border-l border-[#e8ece6] ${dayIndex === 0 ? 'bg-[#f0f7f2]/55' : ''}`} onDoubleClick={() => { setSelectedDay(dayIndex); setAddOpen(true); }}>{blockers.filter((item) => item.day === dayIndex).map((item) => { const top = ((minutes(item.start) - 480) / 60) * 60; const height = Math.max(((minutes(item.end) - minutes(item.start)) / 60) * 60, 34); return <button key={item.id} title="Click to remove" onClick={() => void removeBlocker(item)} className={`group absolute left-1.5 right-1.5 overflow-hidden rounded-lg border px-2 py-1.5 text-left transition hover:brightness-95 ${item.kind === 'learning' ? 'border-[#91c3a5] bg-[#dff2e5] text-[#155838]' : 'border-[#d5dcd7] bg-[#eef1ef] text-[#5e6962]'}`} style={{ top, height }}><span className="block truncate text-[11px] font-semibold">{item.name}</span><span className="block text-[9px] opacity-70">{formatTime(item.start)}–{formatTime(item.end)}</span><Trash2 className="absolute right-1.5 top-1.5 hidden size-3 group-hover:block" /></button>; })}</div>)}
             </div>
           </div></div>
         </section>
@@ -86,7 +134,8 @@ export default function Home() {
       </div>
     </section>
     <footer className="mx-auto flex max-w-[1500px] items-center justify-between px-5 pb-6 text-[11px] text-[#87928a] md:px-8"><span>Saved on this device</span><span>Version {APP_VERSION}</span></footer>
-    <Dialog open={addOpen} onOpenChange={setAddOpen}><DialogContent className="max-w-md rounded-2xl p-5"><DialogHeader><DialogTitle className="text-xl">Add learning time</DialogTitle><DialogDescription>Protect a little time for focused German practice.</DialogDescription></DialogHeader><div className="space-y-4 py-2"><label className="block text-sm font-medium">Name<Input className="mt-2 h-10" value={name} onChange={(event) => setName(event.target.value)} /></label><label className="block text-sm font-medium">Day<select className="mt-2 h-10 w-full rounded-lg border border-input bg-white px-3 text-sm" value={selectedDay} onChange={(event) => setSelectedDay(Number(event.target.value))}>{DAYS.map((day, index) => <option key={day.name} value={index}>{day.name}, September {day.date}</option>)}</select></label><div className="grid grid-cols-2 gap-3"><label className="block text-sm font-medium">Starts<Input className="mt-2 h-10" type="time" value={start} onChange={(event) => setStart(event.target.value)} /></label><label className="block text-sm font-medium">Ends<Input className="mt-2 h-10" type="time" value={end} onChange={(event) => setEnd(event.target.value)} /></label></div>{notice && <p className="text-xs text-red-600">{notice}</p>}</div><DialogFooter className="-mx-5 -mb-5 px-5"><Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button><Button onClick={addBlocker} className="bg-[#1f6f4a] hover:bg-[#185c3d]"><Check />Add to plan</Button></DialogFooter></DialogContent></Dialog>
+    <Dialog open={authOpen} onOpenChange={setAuthOpen}><DialogContent className="max-w-md rounded-2xl p-5"><DialogHeader><DialogTitle className="text-xl">{authMode === 'signin' ? 'Welcome back' : 'Create your Lernzeit account'}</DialogTitle><DialogDescription>Sign in to keep your learning plan safely synced across devices.</DialogDescription></DialogHeader><div className="space-y-4 py-2"><label className="block text-sm font-medium">Email<Input className="mt-2 h-10" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" /></label><label className="block text-sm font-medium">Password<Input className="mt-2 h-10" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={authMode === 'signin' ? 'current-password' : 'new-password'} /></label>{authMessage && <p className="rounded-lg bg-[#f4f7f3] p-3 text-xs text-[#526158]">{authMessage}</p>}<button className="text-xs font-medium text-[#1f6f4a] underline-offset-4 hover:underline" onClick={() => { setAuthMode(authMode === 'signin' ? 'signup' : 'signin'); setAuthMessage(''); }}>{authMode === 'signin' ? 'New here? Create an account' : 'Already have an account? Sign in'}</button></div><DialogFooter className="-mx-5 -mb-5 px-5"><Button variant="outline" onClick={() => setAuthOpen(false)}>Cancel</Button><Button disabled={authBusy || !email || password.length < 6} onClick={() => void submitAuth()} className="bg-[#1f6f4a] hover:bg-[#185c3d]">{authBusy ? 'Please wait…' : authMode === 'signin' ? 'Sign in' : 'Create account'}</Button></DialogFooter></DialogContent></Dialog>
+    <Dialog open={addOpen} onOpenChange={setAddOpen}><DialogContent className="max-w-md rounded-2xl p-5"><DialogHeader><DialogTitle className="text-xl">Add learning time</DialogTitle><DialogDescription>Protect a little time for focused German practice.</DialogDescription></DialogHeader><div className="space-y-4 py-2"><label className="block text-sm font-medium">Name<Input className="mt-2 h-10" value={name} onChange={(event) => setName(event.target.value)} /></label><label className="block text-sm font-medium">Day<select className="mt-2 h-10 w-full rounded-lg border border-input bg-white px-3 text-sm" value={selectedDay} onChange={(event) => setSelectedDay(Number(event.target.value))}>{DAYS.map((day, index) => <option key={day.name} value={index}>{day.name}, September {day.date}</option>)}</select></label><div className="grid grid-cols-2 gap-3"><label className="block text-sm font-medium">Starts<Input className="mt-2 h-10" type="time" value={start} onChange={(event) => setStart(event.target.value)} /></label><label className="block text-sm font-medium">Ends<Input className="mt-2 h-10" type="time" value={end} onChange={(event) => setEnd(event.target.value)} /></label></div>{notice && <p className="text-xs text-red-600">{notice}</p>}</div><DialogFooter className="-mx-5 -mb-5 px-5"><Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button><Button onClick={() => void addBlocker()} className="bg-[#1f6f4a] hover:bg-[#185c3d]"><Check />Add to plan</Button></DialogFooter></DialogContent></Dialog>
     <Dialog open={connectOpen} onOpenChange={setConnectOpen}><DialogContent className="max-w-md rounded-2xl p-5"><DialogHeader><DialogTitle className="text-xl">Calendar connections are next</DialogTitle><DialogDescription>Secure syncing needs provider credentials and a small backend. Your learning plan works locally in the meantime.</DialogDescription></DialogHeader><div className="rounded-xl border border-[#dfe7df] bg-[#f3f8f4] p-4 text-sm text-[#42604d]">Google and Outlook will use secure sign-in. Apple Calendar will support an iCalendar (.ics) feed or file.</div><DialogFooter className="-mx-5 -mb-5 px-5"><Button onClick={() => setConnectOpen(false)} className="bg-[#1f6f4a] hover:bg-[#185c3d]">Got it</Button></DialogFooter></DialogContent></Dialog>
   </main>;
 }
