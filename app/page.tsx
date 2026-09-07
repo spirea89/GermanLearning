@@ -3,14 +3,14 @@
 export const dynamic = 'force-static';
 
 import { useEffect, useMemo, useState } from 'react';
-import { BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight, CircleHelp, Clock3, Cloud, LogIn, LogOut, MoreHorizontal, Plus, Settings, Sparkles, Trash2 } from 'lucide-react';
+import { BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight, CircleHelp, Clock3, Cloud, LogIn, LogOut, MoreHorizontal, Plus, RefreshCw, Settings, Sparkles, Trash2 } from 'lucide-react';
 import type { Session, User } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 
-const APP_VERSION = '0.3.0';
+const APP_VERSION = '0.3.1';
 const STORAGE_KEY = 'lernzeit-blockers-v1';
 const GOOGLE_SYNC_PENDING_KEY = 'lernzeit-google-sync-pending';
 const WEEK_START = '2026-09-07T00:00:00+02:00';
@@ -26,8 +26,6 @@ const INITIAL_BLOCKERS: Blocker[] = [
 ];
 const SOURCES = [
   { id: 'google', label: 'Google Calendar', detail: 'Import your busy times', mark: 'G', color: '#4285F4' },
-  { id: 'outlook', label: 'Outlook', detail: 'Microsoft 365 calendar', mark: 'O', color: '#0078D4' },
-  { id: 'apple', label: 'Apple Calendar', detail: 'Import an .ics calendar', mark: '●', color: '#6b7280' },
 ];
 function minutes(value: string) { const [hour, minute] = value.split(':').map(Number); return hour * 60 + minute; }
 function formatTime(value: string) { const [hour, minute] = value.split(':').map(Number); return `${hour % 12 || 12}${minute ? `:${String(minute).padStart(2, '0')}` : ''} ${hour >= 12 ? 'PM' : 'AM'}`; }
@@ -146,6 +144,11 @@ export default function Home() {
     } catch (error) { window.localStorage.setItem(GOOGLE_SYNC_PENDING_KEY, '1'); setCalendarNotice(error instanceof Error ? error.message : 'Google Calendar import failed.'); }
     finally { setSyncingGoogle(false); }
   }
+  async function refreshGoogleCalendar() {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session?.provider_token) { await connectGoogle(); return; }
+    await syncGoogleCalendar(data.session);
+  }
 
   return <main className="min-h-screen bg-[#f5f7f2] text-[#17221b]">
     <header className="border-b border-[#dce3d9] bg-white/90 px-5 py-3 backdrop-blur md:px-8"><div className="mx-auto flex max-w-[1500px] items-center justify-between">
@@ -162,13 +165,13 @@ export default function Home() {
             <div className="grid grid-cols-[64px_repeat(7,1fr)] border-b border-[#e3e8e0]"><div />{DAYS.map((day, index) => <div key={day.name} className={`border-l border-[#e8ece6] py-3 text-center ${index === 0 ? 'bg-[#f0f7f2]' : ''}`}><p className="text-[11px] font-medium uppercase tracking-wider text-[#718077]">{day.name}</p><p className={`mx-auto mt-1 grid size-8 place-items-center rounded-full text-sm font-semibold ${index === 0 ? 'bg-[#1f6f4a] text-white' : ''}`}>{day.date}</p></div>)}</div>
             <div className="relative grid h-[660px] grid-cols-[64px_repeat(7,1fr)] bg-[linear-gradient(to_bottom,transparent_59px,#e8ece6_60px)] bg-[size:100%_60px]">
               <div className="relative">{Array.from({ length: 11 }, (_, i) => <span key={i} className="absolute right-3 -translate-y-2 text-[10px] text-[#8a968e]" style={{ top: i * 60 }}>{`${8 + i}:00`}</span>)}</div>
-              {DAYS.map((day, dayIndex) => <div key={day.name} className={`relative border-l border-[#e8ece6] ${dayIndex === 0 ? 'bg-[#f0f7f2]/55' : ''}`} onDoubleClick={() => { setSelectedDay(dayIndex); setAddOpen(true); }}>{blockers.filter((item) => item.day === dayIndex).map((item) => { const top = ((minutes(item.start) - 480) / 60) * 60; const height = Math.max(((minutes(item.end) - minutes(item.start)) / 60) * 60, 34); return <button key={item.id} title="Click to remove" onClick={() => void removeBlocker(item)} className={`group absolute left-1.5 right-1.5 overflow-hidden rounded-lg border px-2 py-1.5 text-left transition hover:brightness-95 ${item.kind === 'learning' ? 'border-[#91c3a5] bg-[#dff2e5] text-[#155838]' : 'border-[#d5dcd7] bg-[#eef1ef] text-[#5e6962]'}`} style={{ top, height }}><span className="block truncate text-[11px] font-semibold">{item.name}</span><span className="block text-[9px] opacity-70">{formatTime(item.start)}–{formatTime(item.end)}</span><Trash2 className="absolute right-1.5 top-1.5 hidden size-3 group-hover:block" /></button>; })}</div>)}
+              {DAYS.map((day, dayIndex) => <div key={day.name} className={`relative border-l border-[#e8ece6] ${dayIndex === 0 ? 'bg-[#f0f7f2]/55' : ''}`} onDoubleClick={() => { setSelectedDay(dayIndex); setAddOpen(true); }}>{blockers.filter((item) => item.day === dayIndex).map((item) => { const top = ((minutes(item.start) - 480) / 60) * 60; const height = Math.max(((minutes(item.end) - minutes(item.start)) / 60) * 60, 34); const content = <><span className="block truncate text-[11px] font-semibold">{item.name}</span><span className="block text-[9px] opacity-70">{formatTime(item.start)}–{formatTime(item.end)}</span></>; return item.kind === 'learning' ? <button key={item.id} title="Click to remove" onClick={() => void removeBlocker(item)} className="group absolute left-1.5 right-1.5 overflow-hidden rounded-lg border border-[#91c3a5] bg-[#dff2e5] px-2 py-1.5 text-left text-[#155838] transition hover:brightness-95" style={{ top, height }}>{content}<Trash2 className="absolute right-1.5 top-1.5 hidden size-3 group-hover:block" /></button> : <div key={item.id} title="Imported from Google Calendar" className="absolute left-1.5 right-1.5 cursor-default overflow-hidden rounded-lg border border-[#d5dcd7] bg-[#eef1ef] px-2 py-1.5 text-left text-[#5e6962]" style={{ top, height }}>{content}</div>; })}</div>)}
             </div>
           </div></div>
         </section>
         <aside className="space-y-5">
           <section className="rounded-2xl bg-[#183e2b] p-5 text-white shadow-[0_12px_30px_rgba(24,62,43,0.16)]"><div className="mb-5 flex items-start justify-between"><div className="grid size-10 place-items-center rounded-xl bg-white/10"><Clock3 size={20} /></div><MoreHorizontal className="text-white/60" /></div><p className="text-sm text-white/70">Planned this week</p><p className="mt-1 text-4xl font-semibold tracking-[-0.04em]">{learningHours.toFixed(1)} <span className="text-xl font-normal text-white/65">hours</span></p><div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-[#e8bd78]" style={{ width: `${Math.min((learningHours / 7) * 100, 100)}%` }} /></div><p className="mt-2 text-xs text-white/60">Weekly goal: 7 hours</p></section>
-          <section className="rounded-2xl border border-[#dce3d9] bg-white p-5"><div className="flex items-start gap-3"><div className="grid size-9 place-items-center rounded-lg bg-[#eef3fb] text-[#3674bb]"><Cloud size={18} /></div><div><h2 className="font-semibold">Your calendars</h2><p className="mt-0.5 text-xs leading-relaxed text-[#718077]">Bring in busy times to protect your study plan.</p></div></div><div className="mt-5 space-y-2.5">{SOURCES.map((source) => <button key={source.id} disabled={source.id === 'google' && syncingGoogle} onClick={() => source.id === 'google' ? void connectGoogle() : setConnectOpen(true)} className="flex w-full items-center gap-3 rounded-xl border border-[#e1e6df] p-3 text-left transition hover:border-[#aac4b2] hover:bg-[#f7faf7] disabled:opacity-60"><span className="grid size-8 place-items-center rounded-lg bg-[#f0f3f1] text-xs font-bold" style={{ color: source.color }}>{source.mark}</span><span className="min-w-0 flex-1"><span className="block text-sm font-medium">{source.label}</span><span className="block truncate text-[11px] text-[#7b8780]">{source.id === 'google' && syncingGoogle ? 'Importing busy times…' : source.detail}</span></span><Plus size={15} className="text-[#829087]" /></button>)}</div>{calendarNotice && <p className="mt-3 rounded-lg bg-[#f3f8f4] p-3 text-xs leading-relaxed text-[#42604d]">{calendarNotice}</p>}</section>
+          <section className="rounded-2xl border border-[#dce3d9] bg-white p-5"><div className="flex items-start gap-3"><div className="grid size-9 place-items-center rounded-lg bg-[#eef3fb] text-[#3674bb]"><Cloud size={18} /></div><div><h2 className="font-semibold">Your calendar</h2><p className="mt-0.5 text-xs leading-relaxed text-[#718077]">Bring in busy times to protect your study plan.</p></div></div><div className="mt-5 space-y-2.5">{SOURCES.map((source) => <div key={source.id} className="flex items-center gap-2"><button disabled={syncingGoogle} onClick={() => void connectGoogle()} className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-[#e1e6df] p-3 text-left transition hover:border-[#aac4b2] hover:bg-[#f7faf7] disabled:opacity-60"><span className="grid size-8 place-items-center rounded-lg bg-[#f0f3f1] text-xs font-bold" style={{ color: source.color }}>{source.mark}</span><span className="min-w-0 flex-1"><span className="block text-sm font-medium">{source.label}</span><span className="block truncate text-[11px] text-[#7b8780]">{syncingGoogle ? 'Importing busy times…' : source.detail}</span></span><Plus size={15} className="text-[#829087]" /></button><Button variant="outline" size="icon" disabled={syncingGoogle} onClick={() => void refreshGoogleCalendar()} aria-label="Refresh Google Calendar" title="Refresh Google Calendar" className="size-12 shrink-0 rounded-xl"><RefreshCw className={syncingGoogle ? 'animate-spin' : ''} /></Button></div>)}</div>{calendarNotice && <p className="mt-3 rounded-lg bg-[#f3f8f4] p-3 text-xs leading-relaxed text-[#42604d]">{calendarNotice}</p>}</section>
           <section className="rounded-2xl border border-[#eadfc7] bg-[#fffaf0] p-4"><p className="text-xs font-semibold text-[#7b5a20]">Planning tip</p><p className="mt-1 text-xs leading-relaxed text-[#806c49]">Short, repeatable sessions beat the occasional marathon. Try 30 minutes at the same time each day.</p></section>
         </aside>
       </div>

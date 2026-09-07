@@ -10,6 +10,6 @@ The app follows semantic versioning (`major.minor.patch`). The current version i
 - Minor: new backwards-compatible features
 - Major: incompatible product or data changes
 
-Current version: **0.3.0**
+Current version: **0.3.1**
 
 Google Calendar supports secure read-only sign-in and on-demand busy-time import. Outlook secure sign-in and Apple Calendar iCalendar import are planned next.
