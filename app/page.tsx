@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 
-const APP_VERSION = '0.1.0';
+const APP_VERSION = '0.1.1';
 const STORAGE_KEY = 'lernzeit-blockers-v1';
 type Blocker = { id: string; name: string; day: number; start: string; end: string; kind: 'learning' | 'busy' };
 const DAYS = [{ name: 'Mon', date: '7' }, { name: 'Tue', date: '8' }, { name: 'Wed', date: '9' }, { name: 'Thu', date: '10' }, { name: 'Fri', date: '11' }, { name: 'Sat', date: '12' }, { name: 'Sun', date: '13' }];

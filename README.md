@@ -10,6 +10,6 @@ The app follows semantic versioning (`major.minor.patch`). The current version i
 - Minor: new backwards-compatible features
 - Major: incompatible product or data changes
 
-Current version: **0.1.0**
+Current version: **0.1.1**
 
 Calendar provider buttons currently explain the planned integration. Production Google and Outlook synchronization will require OAuth credentials and a backend; Apple Calendar will use an iCalendar feed or file.
