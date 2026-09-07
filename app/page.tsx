@@ -4,14 +4,17 @@ export const dynamic = 'force-static';
 
 import { useEffect, useMemo, useState } from 'react';
 import { BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight, CircleHelp, Clock3, Cloud, LogIn, LogOut, MoreHorizontal, Plus, Settings, Sparkles, Trash2 } from 'lucide-react';
-import type { User } from '@supabase/supabase-js';
+import type { Session, User } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 
-const APP_VERSION = '0.2.0';
+const APP_VERSION = '0.3.0';
 const STORAGE_KEY = 'lernzeit-blockers-v1';
+const GOOGLE_SYNC_PENDING_KEY = 'lernzeit-google-sync-pending';
+const WEEK_START = '2026-09-07T00:00:00+02:00';
+const WEEK_END = '2026-09-14T00:00:00+02:00';
 type Blocker = { id: string; name: string; day: number; start: string; end: string; kind: 'learning' | 'busy' };
 const DAYS = [{ name: 'Mon', date: '7' }, { name: 'Tue', date: '8' }, { name: 'Wed', date: '9' }, { name: 'Thu', date: '10' }, { name: 'Fri', date: '11' }, { name: 'Sat', date: '12' }, { name: 'Sun', date: '13' }];
 const INITIAL_BLOCKERS: Blocker[] = [
@@ -28,6 +31,11 @@ const SOURCES = [
 ];
 function minutes(value: string) { const [hour, minute] = value.split(':').map(Number); return hour * 60 + minute; }
 function formatTime(value: string) { const [hour, minute] = value.split(':').map(Number); return `${hour % 12 || 12}${minute ? `:${String(minute).padStart(2, '0')}` : ''} ${hour >= 12 ? 'PM' : 'AM'}`; }
+function rowToBlocker(row: { id: string; title: string; starts_at: string; ends_at: string; kind: 'learning' | 'busy' }): Blocker {
+  const starts = new Date(row.starts_at); const ends = new Date(row.ends_at);
+  const weekday = starts.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Europe/Vienna' });
+  return { id: row.id, name: row.title, day: DAYS.findIndex((day) => day.name === weekday), start: starts.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Vienna' }), end: ends.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Vienna' }), kind: row.kind };
+}
 
 export default function Home() {
   const [blockers, setBlockers] = useState<Blocker[]>(INITIAL_BLOCKERS);
@@ -45,24 +53,26 @@ export default function Home() {
   const [password, setPassword] = useState('');
   const [authMessage, setAuthMessage] = useState('');
   const [authBusy, setAuthBusy] = useState(false);
+  const [calendarNotice, setCalendarNotice] = useState('');
+  const [syncingGoogle, setSyncingGoogle] = useState(false);
 
   useEffect(() => { const saved = window.localStorage.getItem(STORAGE_KEY); if (saved) { try { setBlockers(JSON.parse(saved)); } catch { /* keep starter plan */ } } }, []);
   useEffect(() => { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(blockers)); }, [blockers]);
   useEffect(() => {
-    void supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    void supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+      if (data.session && window.localStorage.getItem(GOOGLE_SYNC_PENDING_KEY)) void syncGoogleCalendar(data.session);
+    });
     const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
     return () => data.subscription.unsubscribe();
   }, []);
   useEffect(() => {
     if (!user) return;
-    const weekStart = new Date('2026-09-07T00:00:00+02:00');
-    const weekEnd = new Date('2026-09-14T00:00:00+02:00');
+    const weekStart = new Date(WEEK_START);
+    const weekEnd = new Date(WEEK_END);
     void supabase.from('learning_blocks').select('*').gte('starts_at', weekStart.toISOString()).lt('starts_at', weekEnd.toISOString()).order('starts_at').then(({ data }) => {
       if (!data?.length) return;
-      setBlockers(data.map((row) => {
-        const starts = new Date(row.starts_at); const ends = new Date(row.ends_at);
-        return { id: row.id, name: row.title, day: (starts.getDay() + 6) % 7, start: starts.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }), end: ends.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }), kind: row.kind } as Blocker;
-      }));
+      setBlockers(data.map(rowToBlocker));
     });
   }, [user]);
   useEffect(() => {
@@ -106,6 +116,36 @@ export default function Home() {
     if (authMode === 'signup' && !result.data.session) { setAuthMessage('Check your email to confirm your account.'); return; }
     setAuthOpen(false); setPassword('');
   }
+  async function connectGoogle() {
+    setCalendarNotice('Opening Google secure sign-in…');
+    window.localStorage.setItem(GOOGLE_SYNC_PENDING_KEY, '1');
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: 'https://spirea89.github.io/GermanLearning/', scopes: 'openid email profile https://www.googleapis.com/auth/calendar.readonly', queryParams: { access_type: 'offline', prompt: 'consent' } } });
+    if (error) { window.localStorage.removeItem(GOOGLE_SYNC_PENDING_KEY); setCalendarNotice(error.message); }
+  }
+  async function syncGoogleCalendar(session: Session) {
+    if (!session.provider_token || syncingGoogle) { if (!session.provider_token) setCalendarNotice('Google connected, but no Calendar access token was returned. Please connect again.'); return; }
+    window.localStorage.removeItem(GOOGLE_SYNC_PENDING_KEY);
+    setSyncingGoogle(true); setCalendarNotice('Importing Google Calendar busy times…');
+    try {
+      const params = new URLSearchParams({ timeMin: new Date(WEEK_START).toISOString(), timeMax: new Date(WEEK_END).toISOString(), singleEvents: 'true', orderBy: 'startTime' });
+      const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`, { headers: { Authorization: `Bearer ${session.provider_token}` } });
+      if (!response.ok) throw new Error(`Google Calendar returned ${response.status}. Please reconnect and try again.`);
+      const payload = await response.json() as { items?: Array<{ id?: string; summary?: string; status?: string; start?: { dateTime?: string }; end?: { dateTime?: string } }> };
+      const events = (payload.items ?? []).filter((event) => event.status !== 'cancelled' && event.id && event.start?.dateTime && event.end?.dateTime);
+      const weekStartIso = new Date(WEEK_START).toISOString(); const weekEndIso = new Date(WEEK_END).toISOString();
+      const { error: deleteError } = await supabase.from('learning_blocks').delete().eq('user_id', session.user.id).eq('source', 'google').gte('starts_at', weekStartIso).lt('starts_at', weekEndIso);
+      if (deleteError) throw deleteError;
+      if (events.length) {
+        const { error: insertError } = await supabase.from('learning_blocks').insert(events.map((event) => ({ user_id: session.user.id, title: event.summary?.trim() || 'Busy', starts_at: event.start!.dateTime!, ends_at: event.end!.dateTime!, kind: 'busy', source: 'google', external_event_id: event.id, external_calendar_id: 'primary' })));
+        if (insertError) throw insertError;
+      }
+      const { data, error: loadError } = await supabase.from('learning_blocks').select('*').gte('starts_at', weekStartIso).lt('starts_at', weekEndIso).order('starts_at');
+      if (loadError) throw loadError;
+      setBlockers((data ?? []).map(rowToBlocker));
+      setCalendarNotice(`Google Calendar connected — imported ${events.length} busy ${events.length === 1 ? 'event' : 'events'}.`);
+    } catch (error) { window.localStorage.setItem(GOOGLE_SYNC_PENDING_KEY, '1'); setCalendarNotice(error instanceof Error ? error.message : 'Google Calendar import failed.'); }
+    finally { setSyncingGoogle(false); }
+  }
 
   return <main className="min-h-screen bg-[#f5f7f2] text-[#17221b]">
     <header className="border-b border-[#dce3d9] bg-white/90 px-5 py-3 backdrop-blur md:px-8"><div className="mx-auto flex max-w-[1500px] items-center justify-between">
@@ -128,14 +168,14 @@ export default function Home() {
         </section>
         <aside className="space-y-5">
           <section className="rounded-2xl bg-[#183e2b] p-5 text-white shadow-[0_12px_30px_rgba(24,62,43,0.16)]"><div className="mb-5 flex items-start justify-between"><div className="grid size-10 place-items-center rounded-xl bg-white/10"><Clock3 size={20} /></div><MoreHorizontal className="text-white/60" /></div><p className="text-sm text-white/70">Planned this week</p><p className="mt-1 text-4xl font-semibold tracking-[-0.04em]">{learningHours.toFixed(1)} <span className="text-xl font-normal text-white/65">hours</span></p><div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-[#e8bd78]" style={{ width: `${Math.min((learningHours / 7) * 100, 100)}%` }} /></div><p className="mt-2 text-xs text-white/60">Weekly goal: 7 hours</p></section>
-          <section className="rounded-2xl border border-[#dce3d9] bg-white p-5"><div className="flex items-start gap-3"><div className="grid size-9 place-items-center rounded-lg bg-[#eef3fb] text-[#3674bb]"><Cloud size={18} /></div><div><h2 className="font-semibold">Your calendars</h2><p className="mt-0.5 text-xs leading-relaxed text-[#718077]">Bring in busy times to protect your study plan.</p></div></div><div className="mt-5 space-y-2.5">{SOURCES.map((source) => <button key={source.id} onClick={() => setConnectOpen(true)} className="flex w-full items-center gap-3 rounded-xl border border-[#e1e6df] p-3 text-left transition hover:border-[#aac4b2] hover:bg-[#f7faf7]"><span className="grid size-8 place-items-center rounded-lg bg-[#f0f3f1] text-xs font-bold" style={{ color: source.color }}>{source.mark}</span><span className="min-w-0 flex-1"><span className="block text-sm font-medium">{source.label}</span><span className="block truncate text-[11px] text-[#7b8780]">{source.detail}</span></span><Plus size={15} className="text-[#829087]" /></button>)}</div></section>
+          <section className="rounded-2xl border border-[#dce3d9] bg-white p-5"><div className="flex items-start gap-3"><div className="grid size-9 place-items-center rounded-lg bg-[#eef3fb] text-[#3674bb]"><Cloud size={18} /></div><div><h2 className="font-semibold">Your calendars</h2><p className="mt-0.5 text-xs leading-relaxed text-[#718077]">Bring in busy times to protect your study plan.</p></div></div><div className="mt-5 space-y-2.5">{SOURCES.map((source) => <button key={source.id} disabled={source.id === 'google' && syncingGoogle} onClick={() => source.id === 'google' ? void connectGoogle() : setConnectOpen(true)} className="flex w-full items-center gap-3 rounded-xl border border-[#e1e6df] p-3 text-left transition hover:border-[#aac4b2] hover:bg-[#f7faf7] disabled:opacity-60"><span className="grid size-8 place-items-center rounded-lg bg-[#f0f3f1] text-xs font-bold" style={{ color: source.color }}>{source.mark}</span><span className="min-w-0 flex-1"><span className="block text-sm font-medium">{source.label}</span><span className="block truncate text-[11px] text-[#7b8780]">{source.id === 'google' && syncingGoogle ? 'Importing busy times…' : source.detail}</span></span><Plus size={15} className="text-[#829087]" /></button>)}</div>{calendarNotice && <p className="mt-3 rounded-lg bg-[#f3f8f4] p-3 text-xs leading-relaxed text-[#42604d]">{calendarNotice}</p>}</section>
           <section className="rounded-2xl border border-[#eadfc7] bg-[#fffaf0] p-4"><p className="text-xs font-semibold text-[#7b5a20]">Planning tip</p><p className="mt-1 text-xs leading-relaxed text-[#806c49]">Short, repeatable sessions beat the occasional marathon. Try 30 minutes at the same time each day.</p></section>
         </aside>
       </div>
     </section>
-    <footer className="mx-auto flex max-w-[1500px] items-center justify-between px-5 pb-6 text-[11px] text-[#87928a] md:px-8"><span>Saved on this device</span><span>Version {APP_VERSION}</span></footer>
+    <footer className="mx-auto flex max-w-[1500px] items-center justify-between px-5 pb-6 text-[11px] text-[#87928a] md:px-8"><span>{user ? 'Synced with your Lernzeit account' : 'Saved on this device'}</span><span>Version {APP_VERSION}</span></footer>
     <Dialog open={authOpen} onOpenChange={setAuthOpen}><DialogContent className="max-w-md rounded-2xl p-5"><DialogHeader><DialogTitle className="text-xl">{authMode === 'signin' ? 'Welcome back' : 'Create your Lernzeit account'}</DialogTitle><DialogDescription>Sign in to keep your learning plan safely synced across devices.</DialogDescription></DialogHeader><div className="space-y-4 py-2"><label className="block text-sm font-medium">Email<Input className="mt-2 h-10" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" /></label><label className="block text-sm font-medium">Password<Input className="mt-2 h-10" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={authMode === 'signin' ? 'current-password' : 'new-password'} /></label>{authMessage && <p className="rounded-lg bg-[#f4f7f3] p-3 text-xs text-[#526158]">{authMessage}</p>}<button className="text-xs font-medium text-[#1f6f4a] underline-offset-4 hover:underline" onClick={() => { setAuthMode(authMode === 'signin' ? 'signup' : 'signin'); setAuthMessage(''); }}>{authMode === 'signin' ? 'New here? Create an account' : 'Already have an account? Sign in'}</button></div><DialogFooter className="-mx-5 -mb-5 px-5"><Button variant="outline" onClick={() => setAuthOpen(false)}>Cancel</Button><Button disabled={authBusy || !email || password.length < 6} onClick={() => void submitAuth()} className="bg-[#1f6f4a] hover:bg-[#185c3d]">{authBusy ? 'Please wait…' : authMode === 'signin' ? 'Sign in' : 'Create account'}</Button></DialogFooter></DialogContent></Dialog>
     <Dialog open={addOpen} onOpenChange={setAddOpen}><DialogContent className="max-w-md rounded-2xl p-5"><DialogHeader><DialogTitle className="text-xl">Add learning time</DialogTitle><DialogDescription>Protect a little time for focused German practice.</DialogDescription></DialogHeader><div className="space-y-4 py-2"><label className="block text-sm font-medium">Name<Input className="mt-2 h-10" value={name} onChange={(event) => setName(event.target.value)} /></label><label className="block text-sm font-medium">Day<select className="mt-2 h-10 w-full rounded-lg border border-input bg-white px-3 text-sm" value={selectedDay} onChange={(event) => setSelectedDay(Number(event.target.value))}>{DAYS.map((day, index) => <option key={day.name} value={index}>{day.name}, September {day.date}</option>)}</select></label><div className="grid grid-cols-2 gap-3"><label className="block text-sm font-medium">Starts<Input className="mt-2 h-10" type="time" value={start} onChange={(event) => setStart(event.target.value)} /></label><label className="block text-sm font-medium">Ends<Input className="mt-2 h-10" type="time" value={end} onChange={(event) => setEnd(event.target.value)} /></label></div>{notice && <p className="text-xs text-red-600">{notice}</p>}</div><DialogFooter className="-mx-5 -mb-5 px-5"><Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button><Button onClick={() => void addBlocker()} className="bg-[#1f6f4a] hover:bg-[#185c3d]"><Check />Add to plan</Button></DialogFooter></DialogContent></Dialog>
-    <Dialog open={connectOpen} onOpenChange={setConnectOpen}><DialogContent className="max-w-md rounded-2xl p-5"><DialogHeader><DialogTitle className="text-xl">Calendar connections are next</DialogTitle><DialogDescription>Secure syncing needs provider credentials and a small backend. Your learning plan works locally in the meantime.</DialogDescription></DialogHeader><div className="rounded-xl border border-[#dfe7df] bg-[#f3f8f4] p-4 text-sm text-[#42604d]">Google and Outlook will use secure sign-in. Apple Calendar will support an iCalendar (.ics) feed or file.</div><DialogFooter className="-mx-5 -mb-5 px-5"><Button onClick={() => setConnectOpen(false)} className="bg-[#1f6f4a] hover:bg-[#185c3d]">Got it</Button></DialogFooter></DialogContent></Dialog>
+    <Dialog open={connectOpen} onOpenChange={setConnectOpen}><DialogContent className="max-w-md rounded-2xl p-5"><DialogHeader><DialogTitle className="text-xl">Coming next</DialogTitle><DialogDescription>Google Calendar is ready. Outlook and Apple Calendar connections are the next integrations.</DialogDescription></DialogHeader><div className="rounded-xl border border-[#dfe7df] bg-[#f3f8f4] p-4 text-sm text-[#42604d]">Outlook will use secure Microsoft sign-in. Apple Calendar will support an iCalendar (.ics) feed or file.</div><DialogFooter className="-mx-5 -mb-5 px-5"><Button onClick={() => setConnectOpen(false)} className="bg-[#1f6f4a] hover:bg-[#185c3d]">Got it</Button></DialogFooter></DialogContent></Dialog>
   </main>;
 }
