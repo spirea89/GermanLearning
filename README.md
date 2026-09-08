@@ -10,7 +10,7 @@ The app follows semantic versioning (`major.minor.patch`). The current version i
 - Minor: new backwards-compatible features
 - Major: incompatible product or data changes
 
-Current version: **0.5.1**
+Current version: **0.6.0**
 
 Google Calendar supports secure read-only sign-in and on-demand busy-time import. Outlook secure sign-in and Apple Calendar iCalendar import are planned next.
 
@@ -21,3 +21,5 @@ Signed-in practice time is accumulated into one daily calendar entry instead of 
 Administration lists games before opening their question sets and supports reusable tab-separated `.txt` imports and exports.
 
 Every new or restarted game session shuffles its questions into a fresh order.
+
+The B1 game **Vergangenheitsformen der Verben** practices Präteritum and Perfekt across all six pronoun groups, highlights conjugation endings and auxiliaries, and includes dedicated verb administration with TXT import/export.
