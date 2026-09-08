@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 import { FALLBACK_GAME_ITEMS, normalizeAnswer, type GameItem } from '@/lib/game-content';
 
-const APP_VERSION = '0.4.1';
+const APP_VERSION = '0.5.0';
 
 export default function PracticePage() {
   const [items, setItems] = useState<GameItem[]>(FALLBACK_GAME_ITEMS);
