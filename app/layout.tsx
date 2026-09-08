@@ -3,8 +3,8 @@ import './globals.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://spirea89.github.io/GermanLearning/'),
-  title: 'Learning Plan · Lernzeit',
-  description: 'Plan focused German learning around your weekly schedule.',
+  title: 'Lernzeit · German learning games and plan',
+  description: 'Plan focused German learning and practice vocabulary with short games.',
   openGraph: {
     title: 'Lernzeit',
     description: 'German, one day at a time',

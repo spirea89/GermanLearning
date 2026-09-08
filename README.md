@@ -10,6 +10,8 @@ The app follows semantic versioning (`major.minor.patch`). The current version i
 - Minor: new backwards-compatible features
 - Major: incompatible product or data changes
 
-Current version: **0.3.2**
+Current version: **0.4.0**
 
 Google Calendar supports secure read-only sign-in and on-demand busy-time import. Outlook secure sign-in and Apple Calendar iCalendar import are planned next.
+
+Practice includes the first B1 vocabulary game, **Finden Sie das Gegenteil**, with Supabase-backed content maintenance in the administration area.

@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 
-const APP_VERSION = '0.3.2';
+const APP_VERSION = '0.4.0';
 const STORAGE_KEY = 'lernzeit-blockers-v1';
 const GOOGLE_SYNC_PENDING_KEY = 'lernzeit-google-sync-pending';
 const WEEK_START = '2026-09-07T00:00:00+02:00';
@@ -170,8 +170,8 @@ export default function Home() {
   return <main className="min-h-screen bg-[#f5f7f2] text-[#17221b]">
     <header className="border-b border-[#dce3d9] bg-white/90 px-5 py-3 backdrop-blur md:px-8"><div className="mx-auto flex max-w-[1500px] items-center justify-between">
       <div className="flex items-center gap-3"><div className="grid size-9 place-items-center rounded-xl bg-[#1f6f4a] text-white"><BookOpen size={19} /></div><div><p className="font-semibold leading-tight tracking-[-0.02em]">Lernzeit</p><p className="text-[11px] text-[#718077]">German, one day at a time</p></div></div>
-      <nav className="hidden items-center gap-2 rounded-xl bg-[#edf3ec] p-1 md:flex" aria-label="Main navigation"><button className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium shadow-sm"><CalendarDays size={16} />Learning plan</button><button className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-[#718077]" disabled><Sparkles size={16} />Practice</button></nav>
-      <div className="flex items-center gap-2"><button aria-label="Help" className="grid size-9 place-items-center rounded-lg text-[#718077] hover:bg-[#edf3ec]"><CircleHelp size={18} /></button><button aria-label="Settings" className="hidden size-9 place-items-center rounded-lg text-[#718077] hover:bg-[#edf3ec] sm:grid"><Settings size={18} /></button>{user ? <Button variant="outline" className="max-w-48" onClick={() => void supabase.auth.signOut()}><LogOut /><span className="hidden truncate sm:inline">{user.email}</span><span className="sm:hidden">Sign out</span></Button> : <Button variant="outline" onClick={() => setAuthOpen(true)}><LogIn />Sign in</Button>}</div>
+      <nav className="hidden items-center gap-2 rounded-xl bg-[#edf3ec] p-1 md:flex" aria-label="Main navigation"><span className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium shadow-sm"><CalendarDays size={16} />Learning plan</span><a href="./practice.html" className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-[#718077] hover:bg-white/60"><Sparkles size={16} />Practice</a></nav>
+      <div className="flex items-center gap-2"><button aria-label="Help" className="grid size-9 place-items-center rounded-lg text-[#718077] hover:bg-[#edf3ec]"><CircleHelp size={18} /></button><a href="./admin.html" aria-label="Administration" className="hidden size-9 place-items-center rounded-lg text-[#718077] hover:bg-[#edf3ec] sm:grid"><Settings size={18} /></a>{user ? <Button variant="outline" className="max-w-48" onClick={() => void supabase.auth.signOut()}><LogOut /><span className="hidden truncate sm:inline">{user.email}</span><span className="sm:hidden">Sign out</span></Button> : <Button variant="outline" onClick={() => setAuthOpen(true)}><LogIn />Sign in</Button>}</div>
     </div></header>
     <section className="mx-auto max-w-[1500px] px-5 py-8 md:px-8">
       <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#3c805d]">Your weekly rhythm</p><h1 className="text-3xl font-semibold tracking-[-0.035em] md:text-4xl">Learning Plan</h1><p className="mt-2 max-w-xl text-sm text-[#66736b]">Make space for German around the life you already have.</p></div><Button onClick={() => openNewBlocker()} className="h-11 rounded-xl bg-[#1f6f4a] px-4 hover:bg-[#185c3d]"><Plus /> Add learning time</Button></div>
