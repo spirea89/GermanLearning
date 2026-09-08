@@ -10,7 +10,17 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 import { FALLBACK_GAME_ITEMS, normalizeAnswer, type GameItem } from '@/lib/game-content';
 
-const APP_VERSION = '0.5.0';
+const APP_VERSION = '0.5.1';
+
+function shuffleItems(current: GameItem[]) {
+  const shuffled = [...current];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+  if (shuffled.length > 1 && shuffled[0].id === current[0].id) shuffled.push(shuffled.shift()!);
+  return shuffled;
+}
 
 export default function PracticePage() {
   const [items, setItems] = useState<GameItem[]>(FALLBACK_GAME_ITEMS);
@@ -62,7 +72,7 @@ export default function PracticePage() {
     setResult(isCorrect ? 'correct' : 'wrong'); setAnswered((value) => value + 1); if (isCorrect) setCorrect((value) => value + 1);
   }
   function next() { setIndex((value) => (value + 1) % items.length); setAnswer(''); setResult(null); }
-  function start() { setPlaying(true); setIndex(0); setAnswer(''); setResult(null); setCorrect(0); setAnswered(0); }
+  function start() { setItems((current) => shuffleItems(current)); setPlaying(true); setIndex(0); setAnswer(''); setResult(null); setCorrect(0); setAnswered(0); }
   async function stopPlaying() { await flushPracticeTime(); setPlaying(false); }
 
   return <main className="min-h-screen bg-[#f5f7f2] text-[#17221b]">

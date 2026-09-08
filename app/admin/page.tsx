@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 import type { GameItem } from '@/lib/game-content';
 
-const APP_VERSION = '0.5.0';
+const APP_VERSION = '0.5.1';
 const EMPTY_FORM = { phrase_before: '', target_word: '', phrase_after: '', opposite_word: '', hint: '', active: true, sort_order: 10 };
 
 export default function AdminPage() {
