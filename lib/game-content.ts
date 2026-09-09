@@ -53,6 +53,18 @@ export function splitVerbForm(form: string, ending: string) {
   };
 }
 
+export function splitStemChange(stem: string, comparisonStem: string) {
+  let prefixLength = 0;
+  while (prefixLength < stem.length && prefixLength < comparisonStem.length && stem[prefixLength] === comparisonStem[prefixLength]) prefixLength += 1;
+  let suffixLength = 0;
+  while (suffixLength < stem.length - prefixLength && suffixLength < comparisonStem.length - prefixLength && stem[stem.length - 1 - suffixLength] === comparisonStem[comparisonStem.length - 1 - suffixLength]) suffixLength += 1;
+  return {
+    prefix: stem.slice(0, prefixLength),
+    change: stem.slice(prefixLength, suffixLength ? -suffixLength : undefined),
+    suffix: suffixLength ? stem.slice(-suffixLength) : '',
+  };
+}
+
 export function validateVerbItem(item: Pick<VerbGameItem, 'infinitive' | 'present_forms' | 'present_endings' | 'preterite_forms' | 'preterite_endings' | 'participle' | 'participle_ending'>) {
   const problems: string[] = [];
   const pronouns = ['ich', 'du', 'er/sie/es', 'wir', 'ihr', 'sie/Sie'];
