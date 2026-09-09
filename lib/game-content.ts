@@ -27,6 +27,21 @@ export type VerbGameItem = {
   sort_order: number;
 };
 
+export type PrepositionGameItem = {
+  id: string;
+  level: string;
+  prompt: string;
+  correct_answer: string;
+  response_example: string;
+  construction: string;
+  grammatical_case: 'Akkusativ' | 'Dativ' | 'Genitiv';
+  reference_type: 'thing' | 'person';
+  english_translation: string;
+  explanation: string;
+  active: boolean;
+  sort_order: number;
+};
+
 export const PRONOUNS = ['ich', 'du', 'er/sie/es', 'wir', 'ihr', 'sie/Sie'];
 export const AUXILIARY_FORMS = {
   haben: ['habe', 'hast', 'hat', 'haben', 'habt', 'haben'],
@@ -42,6 +57,14 @@ export const FALLBACK_GAME_ITEMS: GameItem[] = [
   { id: 'demo-1', level: 'B1', game_key: 'opposites', phrase_before: 'Den Fahrstuhl ', target_word: 'betreten', phrase_after: '', opposite_word: 'verlassen', hint: 'Man geht hinaus.', active: true, sort_order: 10 },
   { id: 'demo-2', level: 'B1', game_key: 'opposites', phrase_before: 'Die Tür ', target_word: 'öffnen', phrase_after: '', opposite_word: 'schließen', hint: 'Danach ist sie nicht mehr offen.', active: true, sort_order: 20 },
   { id: 'demo-3', level: 'B1', game_key: 'opposites', phrase_before: 'Das Licht ', target_word: 'einschalten', phrase_after: '', opposite_word: 'ausschalten', hint: 'Danach ist es dunkel.', active: true, sort_order: 30 },
+];
+
+export const FALLBACK_PREPOSITIONS: PrepositionGameItem[] = [
+  { id: 'prep-1', level: 'B1', prompt: '___ wartest du?', correct_answer: 'Worauf', response_example: 'Darauf warte ich.', construction: 'warten auf', grammatical_case: 'Akkusativ', reference_type: 'thing', english_translation: 'What are you waiting for?', explanation: 'For things, wo(r)- forms the question and da(r)- forms the answer.', active: true, sort_order: 10 },
+  { id: 'prep-2', level: 'B1', prompt: '___ hast du Angst?', correct_answer: 'Wovor', response_example: 'Davor habe ich Angst.', construction: 'Angst haben vor', grammatical_case: 'Dativ', reference_type: 'thing', english_translation: 'What are you afraid of?', explanation: 'vor begins with a consonant, so use wo + vor and da + vor.', active: true, sort_order: 20 },
+  { id: 'prep-3', level: 'B1', prompt: '___ denkst du?', correct_answer: 'Woran', response_example: 'Daran denke ich.', construction: 'denken an', grammatical_case: 'Akkusativ', reference_type: 'thing', english_translation: 'What are you thinking about?', explanation: 'Before a vowel, wo and da take a linking r: woran, daran.', active: true, sort_order: 30 },
+  { id: 'prep-4', level: 'B1', prompt: '___ denkst du?', correct_answer: 'An wen', response_example: 'Ich denke an meinen Bruder.', construction: 'denken an', grammatical_case: 'Akkusativ', reference_type: 'person', english_translation: 'Who are you thinking about?', explanation: 'For people, use the preposition plus wen or wem.', active: true, sort_order: 40 },
+  { id: 'prep-5', level: 'B1', prompt: '___ sprecht ihr?', correct_answer: 'Worüber', response_example: 'Darüber sprechen wir.', construction: 'sprechen über', grammatical_case: 'Akkusativ', reference_type: 'thing', english_translation: 'What are you talking about?', explanation: 'über begins with a vowel, so use worüber and darüber.', active: true, sort_order: 50 },
 ];
 
 export function splitVerbForm(form: string, ending: string) {
