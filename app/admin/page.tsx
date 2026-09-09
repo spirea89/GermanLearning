@@ -12,7 +12,7 @@ import { supabase } from '@/lib/supabase';
 import type { GameItem, VerbGameItem } from '@/lib/game-content';
 import { VerbsPanel } from './verbs-panel';
 
-const APP_VERSION = '0.7.3';
+const APP_VERSION = '0.8.0';
 const EMPTY_FORM = { phrase_before: '', target_word: '', phrase_after: '', opposite_word: '', hint: '', active: true, sort_order: 10 };
 
 export default function AdminPage() {

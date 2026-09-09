@@ -15,6 +15,7 @@ export type VerbGameItem = {
   id: string;
   level: string;
   infinitive: string;
+  english_translation: string;
   present_forms: string[];
   present_endings: string[];
   preterite_forms: string[];
@@ -33,8 +34,8 @@ export const AUXILIARY_FORMS = {
 };
 
 export const FALLBACK_VERBS: VerbGameItem[] = [
-  { id: 'verb-1', level: 'B1', infinitive: 'lernen', present_forms: ['lerne','lernst','lernt','lernen','lernt','lernen'], present_endings: ['e','st','t','en','t','en'], preterite_forms: ['lernte','lerntest','lernte','lernten','lerntet','lernten'], preterite_endings: ['te','test','te','ten','tet','ten'], perfect_auxiliary: 'haben', participle: 'gelernt', participle_ending: 't', active: true, sort_order: 10 },
-  { id: 'verb-2', level: 'B1', infinitive: 'fahren', present_forms: ['fahre','fährst','fährt','fahren','fahrt','fahren'], present_endings: ['e','st','t','en','t','en'], preterite_forms: ['fuhr','fuhrst','fuhr','fuhren','fuhrt','fuhren'], preterite_endings: ['','st','','en','t','en'], perfect_auxiliary: 'sein', participle: 'gefahren', participle_ending: 'en', active: true, sort_order: 20 },
+  { id: 'verb-1', level: 'B1', infinitive: 'lernen', english_translation: 'to learn', present_forms: ['lerne','lernst','lernt','lernen','lernt','lernen'], present_endings: ['e','st','t','en','t','en'], preterite_forms: ['lernte','lerntest','lernte','lernten','lerntet','lernten'], preterite_endings: ['te','test','te','ten','tet','ten'], perfect_auxiliary: 'haben', participle: 'gelernt', participle_ending: 't', active: true, sort_order: 10 },
+  { id: 'verb-2', level: 'B1', infinitive: 'fahren', english_translation: 'to drive; to travel', present_forms: ['fahre','fährst','fährt','fahren','fahrt','fahren'], present_endings: ['e','st','t','en','t','en'], preterite_forms: ['fuhr','fuhrst','fuhr','fuhren','fuhrt','fuhren'], preterite_endings: ['','st','','en','t','en'], perfect_auxiliary: 'sein', participle: 'gefahren', participle_ending: 'en', active: true, sort_order: 20 },
 ];
 
 export const FALLBACK_GAME_ITEMS: GameItem[] = [
@@ -65,7 +66,7 @@ export function splitStemChange(stem: string, comparisonStem: string) {
   };
 }
 
-export function validateVerbItem(item: Pick<VerbGameItem, 'infinitive' | 'present_forms' | 'present_endings' | 'preterite_forms' | 'preterite_endings' | 'participle' | 'participle_ending'>) {
+export function validateVerbItem(item: Pick<VerbGameItem, 'infinitive' | 'english_translation' | 'present_forms' | 'present_endings' | 'preterite_forms' | 'preterite_endings' | 'participle' | 'participle_ending'>) {
   const problems: string[] = [];
   const pronouns = ['ich', 'du', 'er/sie/es', 'wir', 'ihr', 'sie/Sie'];
   for (const [label, forms, endings] of [['Present', item.present_forms, item.present_endings], ['Präteritum', item.preterite_forms, item.preterite_endings]] as const) {
@@ -78,6 +79,7 @@ export function validateVerbItem(item: Pick<VerbGameItem, 'infinitive' | 'presen
     });
   }
   if (!item.infinitive.trim()) problems.push('Infinitive is required.');
+  if (!item.english_translation.trim()) problems.push('English translation is required.');
   if (!item.participle.trim()) problems.push('Participle is required.');
   else if (item.participle_ending && !item.participle.endsWith(item.participle_ending)) problems.push(`Participle “${item.participle}” does not end in “${item.participle_ending}”.`);
   return problems;
