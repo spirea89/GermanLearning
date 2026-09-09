@@ -6,13 +6,13 @@ import { ArrowLeft, ArrowRight, BookOpen, Check, Clock3, Gamepad2, Lightbulb, Ro
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
-import { AUXILIARY_FORMS, FALLBACK_GAME_ITEMS, FALLBACK_VERBS, PRONOUNS, normalizeAnswer, type GameItem, type VerbGameItem } from '@/lib/game-content';
+import { AUXILIARY_FORMS, FALLBACK_GAME_ITEMS, FALLBACK_VERBS, PRONOUNS, normalizeAnswer, splitVerbForm, type GameItem, type VerbGameItem } from '@/lib/game-content';
 
-const APP_VERSION = '0.7.1';
+const APP_VERSION = '0.7.2';
 type GameKey = 'opposites' | 'verb_past';
 type VerbMode = 'preterite' | 'perfect';
 function shuffle<T>(values: T[]) { const result = [...values]; for (let i = result.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [result[i], result[j]] = [result[j], result[i]]; } if (result.length > 1 && result[0] === values[0]) result.push(result.shift()!); return result; }
-function HighlightedWord({ word, ending }: { word: string; ending: string }) { const stem = ending ? word.slice(0, -ending.length) : word; return <span className="font-semibold">{stem}<span className="text-red-600">{ending}</span></span>; }
+function HighlightedWord({ word, ending }: { word: string; ending: string }) { const parts = splitVerbForm(word, ending); return <span className="font-semibold">{parts.stem}<span className="text-red-600">{parts.ending}</span>{parts.remainder}</span>; }
 
 export default function PracticePage() {
   const [opposites, setOpposites] = useState<GameItem[]>(FALLBACK_GAME_ITEMS);

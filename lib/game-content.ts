@@ -43,6 +43,34 @@ export const FALLBACK_GAME_ITEMS: GameItem[] = [
   { id: 'demo-3', level: 'B1', game_key: 'opposites', phrase_before: 'Das Licht ', target_word: 'einschalten', phrase_after: '', opposite_word: 'ausschalten', hint: 'Danach ist es dunkel.', active: true, sort_order: 30 },
 ];
 
+export function splitVerbForm(form: string, ending: string) {
+  const [conjugated = '', ...rest] = form.trim().split(/\s+/);
+  const validEnding = !ending || conjugated.endsWith(ending);
+  return {
+    stem: validEnding && ending ? conjugated.slice(0, -ending.length) : conjugated,
+    ending: validEnding ? ending : '',
+    remainder: rest.length ? ` ${rest.join(' ')}` : '',
+  };
+}
+
+export function validateVerbItem(item: Pick<VerbGameItem, 'infinitive' | 'present_forms' | 'present_endings' | 'preterite_forms' | 'preterite_endings' | 'participle' | 'participle_ending'>) {
+  const problems: string[] = [];
+  const pronouns = ['ich', 'du', 'er/sie/es', 'wir', 'ihr', 'sie/Sie'];
+  for (const [label, forms, endings] of [['Present', item.present_forms, item.present_endings], ['Präteritum', item.preterite_forms, item.preterite_endings]] as const) {
+    if (forms.length !== 6 || endings.length !== 6) { problems.push(`${label} needs exactly six forms and six endings.`); continue; }
+    forms.forEach((form, index) => {
+      const conjugated = form.trim().split(/\s+/)[0] ?? '';
+      const ending = endings[index];
+      if (!conjugated) problems.push(`${label} (${pronouns[index]}) is empty.`);
+      else if (ending && !conjugated.endsWith(ending)) problems.push(`${label} (${pronouns[index]}): “${conjugated}” does not end in “${ending}”.`);
+    });
+  }
+  if (!item.infinitive.trim()) problems.push('Infinitive is required.');
+  if (!item.participle.trim()) problems.push('Participle is required.');
+  else if (item.participle_ending && !item.participle.endsWith(item.participle_ending)) problems.push(`Participle “${item.participle}” does not end in “${item.participle_ending}”.`);
+  return problems;
+}
+
 export function normalizeAnswer(value: string) {
   return value.trim().toLocaleLowerCase('de-DE').normalize('NFC');
 }
