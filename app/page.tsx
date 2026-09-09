@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 
-const APP_VERSION = '0.7.0';
+const APP_VERSION = '0.7.1';
 const STORAGE_KEY = 'lernzeit-blockers-v1';
 const GOOGLE_SYNC_PENDING_KEY = 'lernzeit-google-sync-pending';
 type Blocker = { id: string; name: string; date: string; start: string; end: string; kind: 'learning' | 'busy'; source?: string };
