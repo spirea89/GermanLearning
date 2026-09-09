@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 import { AUXILIARY_FORMS, FALLBACK_GAME_ITEMS, FALLBACK_VERBS, PRONOUNS, normalizeAnswer, type GameItem, type VerbGameItem } from '@/lib/game-content';
 
-const APP_VERSION = '0.6.1';
+const APP_VERSION = '0.7.0';
 type GameKey = 'opposites' | 'verb_past';
 type VerbMode = 'preterite' | 'perfect';
 function shuffle<T>(values: T[]) { const result = [...values]; for (let i = result.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [result[i], result[j]] = [result[j], result[i]]; } if (result.length > 1 && result[0] === values[0]) result.push(result.shift()!); return result; }
