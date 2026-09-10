@@ -13,7 +13,7 @@ import type { GameItem, PrepositionGameItem, VerbGameItem } from '@/lib/game-con
 import { VerbsPanel } from './verbs-panel';
 import { PrepositionsPanel } from './prepositions-panel';
 
-const APP_VERSION = '0.9.0';
+const APP_VERSION = '0.10.0';
 const EMPTY_FORM = { phrase_before: '', target_word: '', phrase_after: '', opposite_word: '', hint: '', active: true, sort_order: 10 };
 
 export default function AdminPage() {
