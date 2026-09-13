@@ -218,6 +218,8 @@ html[data-theme="arcade"] main:not(.home-page) [class*="bg-[#c"],
 html[data-theme="arcade"] main:not(.home-page) [class*="bg-[#d"] { background-color:#29204f !important; color:#fff !important; }
 html[data-theme="arcade"] main:not(.home-page) button[class*="bg-[#"],
 html[data-theme="arcade"] main:not(.home-page) a[class*="bg-[#"] { color:#fff !important; }
+html[data-theme="arcade"] main:not(.home-page) header nav [class~="bg-white"] { background:#fff !important; color:#171126 !important; }
+html[data-theme="arcade"] main:not(.home-page) header nav [class*="hover:bg-white"]:hover { background:#fff !important; color:#171126 !important; }
 
 html[data-theme="classic"] [class*="text-[#"] { color:#27383d !important; }
 html[data-theme="classic"] [class*="text-[#d9ff59]"],
@@ -233,6 +235,7 @@ html[data-theme="classic"] a[class*="bg-[#2"],
 html[data-theme="classic"] a[class*="bg-[#3"],
 html[data-theme="classic"] a[class*="bg-[#5"],
 html[data-theme="classic"] a[class*="bg-[#6"] { color:#fff !important; }
+html[data-theme="classic"] .home-page [class*="text-transparent"] { color:#18333b !important; }
 
 html[data-theme="black"] [class*="text-[#"] { color:#f4f4f5 !important; }
 html[data-theme="black"] main [class*="bg-[#"] { background-color:#171717 !important; color:#f4f4f5 !important; }
@@ -241,6 +244,11 @@ html[data-theme="black"] main a[class*="bg-[#"] { background-color:#f4f4f5 !impo
 html[data-theme="black"] main [class*="bg-[#"][class*="text-[#"] { color:#f4f4f5 !important; }
 html[data-theme="black"] main button[class*="bg-[#"][class*="text-[#"],
 html[data-theme="black"] main a[class*="bg-[#"][class*="text-[#"] { color:#050505 !important; }
+html[data-theme="black"] main header nav [class~="bg-white"] { background:#f4f4f5 !important; color:#050505 !important; }
+html[data-theme="black"] main header nav [class~="bg-white"] * { color:#050505 !important; }
+html[data-theme="black"] main header nav [class*="hover:bg-white"]:hover { background:#f4f4f5 !important; color:#050505 !important; }
+html[data-theme="black"] .home-page h1 { color:#fff !important; }
+html[data-theme="black"] .home-page [class*="text-transparent"] { color:#fff !important; }
 html[data-theme="black"] button:disabled { background:#2a2a2a !important; color:#a3a3a3 !important; }
 
 @media (max-width:640px){.theme-switcher{right:.6rem;bottom:.6rem}.theme-switcher button span{display:none}.theme-switcher button{padding:.55rem}}
