@@ -5,7 +5,7 @@ import type { User } from '@supabase/supabase-js';
 import { ArrowLeft, Check, Copy, Crown, LogIn, Play, Plus, Swords, Trophy, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button'; import { Input } from '@/components/ui/input'; import { supabase } from '@/lib/supabase';
 
-const APP_VERSION='0.11.1', STORAGE='lernzeit-active-contest';
+const APP_VERSION='0.11.2', STORAGE='lernzeit-active-contest';
 type Contest={id:string;join_code:string;organizer_id:string;level:string;question_count:number;status:'lobby'|'active'|'finished'};
 type Player={id:string;user_id:string;display_name:string;score:number;answered_count:number};
 type QuestionData={game:string;title:string;prompt:string;focus:string;translation:string;answer_labels:string[]};
@@ -20,7 +20,7 @@ export default function ContestPage(){
  useEffect(()=>{if(!contestId)return;const timer=window.setInterval(()=>{if(!feedback)void load(contestId);},2000);return()=>clearInterval(timer);},[contestId,feedback,load]);
  useEffect(()=>{if(current)setAnswers(Array(current.question.answer_labels.length).fill(''));},[current?.id]);
  async function signIn(){setBusy(true);const{error}=await supabase.auth.signInWithPassword({email,password});setBusy(false);if(error)setMessage(error.message);}
- async function create(){setBusy(true);setMessage('');const{data,error}=await supabase.rpc('create_contest',{p_level:level,p_question_count:count,p_display_name:name});setBusy(false);if(error){setMessage(error.message);return;}const id=(data as{id:string}).id;localStorage.setItem(STORAGE,id);setContestId(id);await load(id);}
+ async function create(){setBusy(true);setMessage('');try{const{data,error}=await supabase.rpc('create_contest',{p_level:level,p_question_count:count,p_display_name:name});if(error)throw error;const id=(data as{id?:string}|null)?.id;if(!id)throw new Error('The contest was not created. Please try again.');localStorage.setItem(STORAGE,id);setContestId(id);await load(id);}catch(error){setMessage(error instanceof Error?error.message:'The contest could not be created.');}finally{setBusy(false);}}
  async function join(){setBusy(true);setMessage('');const{data,error}=await supabase.rpc('join_contest',{p_join_code:code.toUpperCase(),p_display_name:name});setBusy(false);if(error){setMessage(error.message);return;}const id=data as string;localStorage.setItem(STORAGE,id);setContestId(id);await load(id);}
  async function start(){if(!contest)return;setBusy(true);const{error}=await supabase.rpc('start_contest',{p_contest_id:contest.id});setBusy(false);if(error)setMessage(error.message);else await load(contest.id);}
  async function submit(){if(!contest||!current||answers.some(a=>!a.trim()))return;setBusy(true);const{data,error}=await supabase.rpc('submit_contest_answer',{p_contest_id:contest.id,p_position:current.position,p_response:answers});setBusy(false);if(error){setMessage(error.message);return;}const result=data as{correct:boolean;expected:string[]};setFeedback({correct:result.correct,expected:result.expected});}
