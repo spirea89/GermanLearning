@@ -1,202 +1,29 @@
 'use client';
-
-export const dynamic = 'force-static';
-
-import { useEffect, useMemo, useState } from 'react';
-import { BookOpen, CalendarDays, Check, ChevronLeft, ChevronRight, CircleHelp, Clock3, Cloud, LogIn, LogOut, MoreHorizontal, Plus, RefreshCw, Settings, Sparkles, Trash2 } from 'lucide-react';
-import type { Session, User } from '@supabase/supabase-js';
-import { addDays, addWeeks, format, isSameDay, startOfDay, startOfWeek } from 'date-fns';
+export const dynamic='force-static';
+import { useCallback, useEffect, useState } from 'react';
+import type { User } from '@supabase/supabase-js';
+import { ArrowRight, CalendarDays, Flame, Gamepad2, LogIn, LogOut, Play, Sparkles, Swords, Trophy, Users, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 
-const APP_VERSION = '0.12.0';
-const STORAGE_KEY = 'lernzeit-blockers-v1';
-const GOOGLE_SYNC_PENDING_KEY = 'lernzeit-google-sync-pending';
-type Blocker = { id: string; name: string; date: string; start: string; end: string; kind: 'learning' | 'busy'; source?: string };
-const INITIAL_WEEK = startOfWeek(new Date(), { weekStartsOn: 1 });
-const INITIAL_BLOCKERS: Blocker[] = [
-  { id: 'sample-1', name: 'Morning focus', date: format(addDays(INITIAL_WEEK, 0), 'yyyy-MM-dd'), start: '08:00', end: '09:00', kind: 'learning' },
-  { id: 'sample-2', name: 'Team meeting', date: format(addDays(INITIAL_WEEK, 1), 'yyyy-MM-dd'), start: '10:00', end: '11:30', kind: 'busy' },
-  { id: 'sample-3', name: 'Grammar practice', date: format(addDays(INITIAL_WEEK, 2), 'yyyy-MM-dd'), start: '18:00', end: '19:00', kind: 'learning' },
-  { id: 'sample-4', name: 'Dentist', date: format(addDays(INITIAL_WEEK, 3), 'yyyy-MM-dd'), start: '14:00', end: '15:00', kind: 'busy' },
-  { id: 'sample-5', name: 'Weekly review', date: format(addDays(INITIAL_WEEK, 6), 'yyyy-MM-dd'), start: '10:00', end: '11:00', kind: 'learning' },
-];
-const SOURCES = [
-  { id: 'google', label: 'Google Calendar', detail: 'Import your busy times', mark: 'G', color: '#4285F4' },
-];
-function minutes(value: string) { const [hour, minute] = value.split(':').map(Number); return hour * 60 + minute; }
-function formatTime(value: string) { const [hour, minute] = value.split(':').map(Number); return `${hour % 12 || 12}${minute ? `:${String(minute).padStart(2, '0')}` : ''} ${hour >= 12 ? 'PM' : 'AM'}`; }
-function isoDate(value: Date) { return format(value, 'yyyy-MM-dd'); }
-function rowToBlocker(row: { id: string; title: string; starts_at: string; ends_at: string; kind: 'learning' | 'busy'; source?: string }): Blocker {
-  const starts = new Date(row.starts_at); const ends = new Date(row.ends_at);
-  return { id: row.id, name: row.title, date: starts.toLocaleDateString('en-CA', { timeZone: 'Europe/Vienna' }), start: starts.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Vienna' }), end: ends.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Vienna' }), kind: row.kind, source: row.source };
+const APP_VERSION='0.13.0';
+type OpenBattle={id:string;level:string;question_count:number;organizer_name:string;player_count:number;created_at:string};
+
+export default function Home(){
+ const[user,setUser]=useState<User|null>(null),[battles,setBattles]=useState<OpenBattle[]>([]),[loading,setLoading]=useState(true),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[message,setMessage]=useState(''),[busy,setBusy]=useState(false);
+ const browse=useCallback(async()=>{const{data,error}=await supabase.rpc('browse_open_contests');if(!error)setBattles((data??[]) as OpenBattle[]);setLoading(false);},[]);
+ useEffect(()=>{void supabase.auth.getUser().then(({data})=>{setUser(data.user);if(data.user)void browse();else setLoading(false);});const{data}=supabase.auth.onAuthStateChange((_e,session)=>{setUser(session?.user??null);if(session?.user)void browse();else setBattles([]);});return()=>data.subscription.unsubscribe();},[browse]);
+ useEffect(()=>{if(!user)return;const timer=window.setInterval(()=>void browse(),3000);return()=>clearInterval(timer);},[user,browse]);
+ async function signIn(){setBusy(true);setMessage('');const{error}=await supabase.auth.signInWithPassword({email,password});setBusy(false);if(error)setMessage(error.message);}
+ return <main className="min-h-screen overflow-hidden bg-[#100c24] text-white selection:bg-[#d9ff59] selection:text-[#171126]">
+  <header className="relative z-20 border-b border-white/10 bg-[#100c24]/85 px-5 py-4 backdrop-blur-xl"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4"><a href="./" className="flex items-center gap-3"><span className="grid size-10 rotate-[-6deg] place-items-center rounded-xl bg-[#d9ff59] text-[#171126] shadow-[4px_4px_0_#ff5a7a]"><Zap size={21} fill="currentColor"/></span><span className="text-xl font-black tracking-tight">Lernzeit<span className="text-[#d9ff59]">!</span></span></a><nav className="hidden items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-1 md:flex"><a href="./" className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-[#171126]">Battles</a><a href="./plan.html" className="rounded-xl px-4 py-2 text-sm font-semibold text-white/70 hover:bg-white/10 hover:text-white">Learning Plan</a><a href="./practice.html" className="rounded-xl px-4 py-2 text-sm font-semibold text-white/70 hover:bg-white/10 hover:text-white">Games</a></nav>{user?<Button variant="ghost" onClick={()=>void supabase.auth.signOut()} className="text-white hover:bg-white/10 hover:text-white"><LogOut/>Sign out</Button>:<a href="#signin" className="rounded-xl bg-[#d9ff59] px-4 py-2 text-sm font-black text-[#171126]">Sign in</a>}</div></header>
+  <section className="relative px-5 pb-16 pt-14"><div className="pointer-events-none absolute left-[-8rem] top-10 size-80 rounded-full bg-[#6d4aff]/30 blur-3xl"/><div className="pointer-events-none absolute right-[-5rem] top-32 size-72 rounded-full bg-[#ff4f87]/25 blur-3xl"/><div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.05fr_.95fr] lg:items-center"><div><span className="inline-flex rotate-[-2deg] items-center gap-2 rounded-full border-2 border-[#d9ff59]/60 bg-[#d9ff59]/10 px-4 py-2 text-xs font-black uppercase tracking-[.18em] text-[#d9ff59]"><Flame size={15}/>Live German showdowns</span><h1 className="mt-6 max-w-3xl text-5xl font-black leading-[.95] tracking-[-.055em] sm:text-7xl">Learn German.<br/><span className="bg-gradient-to-r from-[#d9ff59] via-[#62e6ff] to-[#ff6f9d] bg-clip-text text-transparent">Beat your friends.</span></h1><p className="mt-6 max-w-xl text-lg leading-relaxed text-white/65">Jump into a live language battle, climb the leaderboard, and turn grammar practice into something worth bragging about.</p><div className="mt-8 flex flex-wrap gap-3"><a href="./contest.html" className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#d9ff59] px-6 font-black text-[#171126] shadow-[5px_5px_0_#ff5a7a] transition hover:-translate-y-1">Create a battle <Swords size={19}/></a><a href="./practice.html" className="inline-flex h-12 items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-6 font-bold backdrop-blur hover:bg-white/15">Train solo <Gamepad2 size={19}/></a></div><div className="mt-10 flex gap-7 text-sm text-white/55"><span><strong className="block text-2xl font-black text-white">10</strong>players max</span><span><strong className="block text-2xl font-black text-white">3</strong>game types</span><span><strong className="block text-2xl font-black text-white">∞</strong>rematches</span></div></div>
+   <div className="relative"><div className="absolute -inset-3 rotate-3 rounded-[2.2rem] bg-gradient-to-br from-[#6d4aff] to-[#ff4f87] opacity-80"/><div className="relative rounded-[2rem] border border-white/15 bg-[#1b1538]/95 p-5 shadow-2xl"><div className="flex items-center justify-between"><div><p className="text-xs font-black uppercase tracking-[.18em] text-[#62e6ff]">Open now</p><h2 className="mt-1 text-2xl font-black">Battle lobbies</h2></div><span className="flex items-center gap-2 rounded-full bg-[#30d786]/15 px-3 py-1 text-xs font-bold text-[#5bf0a5]"><span className="size-2 animate-pulse rounded-full bg-[#5bf0a5]"/>Live</span></div><BattleList user={user} battles={battles} loading={loading}/></div></div></div></section>
+  {!user&&<section id="signin" className="border-y border-white/10 bg-white/[.04] px-5 py-12"><div className="mx-auto grid max-w-5xl items-center gap-8 md:grid-cols-2"><div><p className="text-xs font-black uppercase tracking-[.18em] text-[#ff83aa]">Ready player one?</p><h2 className="mt-2 text-3xl font-black">Sign in and enter the arena.</h2><p className="mt-3 text-white/55">Your score, learning time, and battle identity stay connected to your Lernzeit account.</p></div><div className="rounded-3xl border border-white/10 bg-[#1b1538] p-5"><div className="grid gap-3 sm:grid-cols-2"><Input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} className="border-white/15 bg-white/10 text-white placeholder:text-white/35"/><Input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} className="border-white/15 bg-white/10 text-white placeholder:text-white/35"/></div><Button onClick={()=>void signIn()} disabled={busy||!email||!password} className="mt-3 w-full bg-[#d9ff59] font-black text-[#171126] hover:bg-[#c8ef48]"><LogIn/>{busy?'Entering…':'Enter Lernzeit'}</Button>{message&&<p className="mt-2 text-sm text-[#ff83aa]">{message}</p>}</div></div></section>}
+  <section className="px-5 py-14"><div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-2"><a href="./plan.html" className="group rounded-[2rem] border border-white/10 bg-gradient-to-br from-[#182c4f] to-[#19213f] p-7 transition hover:-translate-y-1"><span className="grid size-12 place-items-center rounded-2xl bg-[#62e6ff] text-[#10233b]"><CalendarDays/></span><p className="mt-8 text-xs font-black uppercase tracking-[.18em] text-[#62e6ff]">Plan it</p><h3 className="mt-2 text-3xl font-black">Own your week</h3><p className="mt-2 text-white/55">Build your learning plan around real life and calendar commitments.</p><span className="mt-6 flex items-center gap-2 font-bold text-[#62e6ff]">Open Learning Plan <ArrowRight className="transition group-hover:translate-x-1"/></span></a><a href="./practice.html" className="group rounded-[2rem] border border-white/10 bg-gradient-to-br from-[#46213d] to-[#291a3e] p-7 transition hover:-translate-y-1"><span className="grid size-12 place-items-center rounded-2xl bg-[#ff6f9d] text-[#351125]"><Trophy/></span><p className="mt-8 text-xs font-black uppercase tracking-[.18em] text-[#ff83aa]">Level up</p><h3 className="mt-2 text-3xl font-black">Train your weak spots</h3><p className="mt-2 text-white/55">Fast grammar and vocabulary games with instant feedback.</p><span className="mt-6 flex items-center gap-2 font-bold text-[#ff83aa]">Browse Games <ArrowRight className="transition group-hover:translate-x-1"/></span></a></div></section>
+  <footer className="border-t border-white/10 px-5 py-6 text-xs text-white/35"><div className="mx-auto flex max-w-7xl justify-between"><span>Lernzeit · German, but make it a game.</span><span>Version {APP_VERSION}</span></div></footer>
+ </main>;
 }
 
-export default function Home() {
-  const [blockers, setBlockers] = useState<Blocker[]>(INITIAL_BLOCKERS);
-  const [addOpen, setAddOpen] = useState(false);
-  const [editingBlocker, setEditingBlocker] = useState<Blocker | null>(null);
-  const [connectOpen, setConnectOpen] = useState(false);
-  const [selectedDay, setSelectedDay] = useState(0);
-  const [name, setName] = useState('German study');
-  const [start, setStart] = useState('17:00');
-  const [end, setEnd] = useState('18:00');
-  const [notice, setNotice] = useState('');
-  const [user, setUser] = useState<User | null>(null);
-  const [authOpen, setAuthOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [authMessage, setAuthMessage] = useState('');
-  const [authBusy, setAuthBusy] = useState(false);
-  const [calendarNotice, setCalendarNotice] = useState('');
-  const [syncingGoogle, setSyncingGoogle] = useState(false);
-  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
-  const days = useMemo(() => Array.from({ length: 7 }, (_, index) => { const value = addDays(weekStart, index); return { value, iso: isoDate(value), name: format(value, 'EEE'), date: format(value, 'd') }; }), [weekStart]);
-  const weekEnd = addDays(weekStart, 7);
-
-  useEffect(() => { const saved = window.localStorage.getItem(STORAGE_KEY); if (saved) { try { const parsed = JSON.parse(saved) as Array<Blocker & { day?: number }>; setBlockers(parsed.filter((item) => item.date).map((item) => ({ ...item, date: item.date }))); } catch { /* keep starter plan */ } } }, []);
-  useEffect(() => { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(blockers)); }, [blockers]);
-  useEffect(() => {
-    void supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
-      if (data.session && window.localStorage.getItem(GOOGLE_SYNC_PENDING_KEY)) void syncGoogleCalendar(data.session);
-    });
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
-    return () => data.subscription.unsubscribe();
-  }, []);
-  useEffect(() => {
-    if (!user) return;
-    void supabase.from('learning_blocks').select('*').gte('starts_at', startOfDay(weekStart).toISOString()).lt('starts_at', startOfDay(weekEnd).toISOString()).order('starts_at').then(({ data }) => {
-      setBlockers((data ?? []).map(rowToBlocker));
-    });
-  }, [user, weekStart]);
-  useEffect(() => {
-    const context = (document as Document & { modelContext?: { registerTool?: (...args: unknown[]) => unknown } }).modelContext;
-    if (!context?.registerTool) return;
-    const lifecycle = new AbortController();
-    void Promise.resolve(context.registerTool({
-      name: 'create_learning_blocker', title: 'Create learning blocker',
-      description: 'Add a named blocked or learning time to the visible weekly learning plan.',
-      inputSchema: { type: 'object', properties: { name: { type: 'string' }, day: { type: 'integer', minimum: 0, maximum: 6 }, start: { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' }, end: { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' } }, required: ['name', 'day', 'start', 'end'], additionalProperties: false },
-      annotations: { readOnlyHint: false, untrustedContentHint: false },
-      execute(input: { name: string; day: number; start: string; end: string }) {
-        if (!input.name.trim() || input.day < 0 || input.day > 6 || minutes(input.end) <= minutes(input.start)) throw new Error('Invalid blocker details.');
-        const blocker: Blocker = { id: crypto.randomUUID(), name: input.name.trim(), date: days[input.day].iso, start: input.start, end: input.end, kind: 'learning' };
-        setBlockers((current) => [...current, blocker]); return { id: blocker.id, status: 'created' };
-      },
-    }, { signal: lifecycle.signal })).catch(() => undefined);
-    return () => lifecycle.abort();
-  }, [days]);
-  const learningHours = useMemo(() => blockers.filter((item) => item.kind === 'learning' && days.some((day) => day.iso === item.date)).reduce((total, item) => total + (minutes(item.end) - minutes(item.start)) / 60, 0), [blockers, days]);
-  const weekLabel = `${format(weekStart, 'MMM d')} – ${format(addDays(weekStart, 6), 'MMM d, yyyy')}`;
-  async function addBlocker() {
-    if (!name.trim() || minutes(end) <= minutes(start)) { setNotice('Choose a name and an end time after the start time.'); return; }
-    const selectedDate = days[selectedDay].iso;
-    const local: Blocker = { id: editingBlocker?.id ?? crypto.randomUUID(), name: name.trim(), date: selectedDate, start, end, kind: 'learning' };
-    const startsAt = new Date(`${selectedDate}T${start}:00`).toISOString();
-    const endsAt = new Date(`${selectedDate}T${end}:00`).toISOString();
-    if (editingBlocker) {
-      if (user && !editingBlocker.id.startsWith('sample-')) {
-        const { error } = await supabase.from('learning_blocks').update({ title: local.name, starts_at: startsAt, ends_at: endsAt }).eq('id', editingBlocker.id);
-        if (error) { setNotice(error.message); return; }
-      }
-      setBlockers((current) => current.map((item) => item.id === editingBlocker.id ? local : item));
-    } else if (user) {
-      const { data, error } = await supabase.from('learning_blocks').insert({ user_id: user.id, title: local.name, starts_at: startsAt, ends_at: endsAt, kind: 'learning', source: 'manual' }).select('id').single();
-      if (error) { setNotice(error.message); return; }
-      local.id = data.id;
-      setBlockers((current) => [...current, local]);
-    } else {
-      setBlockers((current) => [...current, local]);
-    }
-    setAddOpen(false); setEditingBlocker(null); setNotice('');
-  }
-  async function removeBlocker(item: Blocker) {
-    if (user && !item.id.startsWith('sample-')) await supabase.from('learning_blocks').delete().eq('id', item.id);
-    setBlockers((current) => current.filter((entry) => entry.id !== item.id));
-  }
-  function openNewBlocker(day = 0) {
-    setEditingBlocker(null); setSelectedDay(day); setName('German study'); setStart('17:00'); setEnd('18:00'); setNotice(''); setAddOpen(true);
-  }
-  function openEditBlocker(item: Blocker) {
-    setEditingBlocker(item); setSelectedDay(Math.max(days.findIndex((day) => day.iso === item.date), 0)); setName(item.name); setStart(item.start); setEnd(item.end); setNotice(''); setAddOpen(true);
-  }
-  async function submitAuth() {
-    setAuthBusy(true); setAuthMessage('');
-    const result = authMode === 'signin' ? await supabase.auth.signInWithPassword({ email, password }) : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: 'https://spirea89.github.io/GermanLearning/' } });
-    setAuthBusy(false);
-    if (result.error) { setAuthMessage(result.error.message); return; }
-    if (authMode === 'signup' && !result.data.session) { setAuthMessage('Check your email to confirm your account.'); return; }
-    setAuthOpen(false); setPassword('');
-  }
-  async function connectGoogle() {
-    setCalendarNotice('Opening Google secure sign-in…');
-    window.localStorage.setItem(GOOGLE_SYNC_PENDING_KEY, '1');
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: 'https://spirea89.github.io/GermanLearning/', scopes: 'openid email profile https://www.googleapis.com/auth/calendar.readonly', queryParams: { access_type: 'offline', prompt: 'consent' } } });
-    if (error) { window.localStorage.removeItem(GOOGLE_SYNC_PENDING_KEY); setCalendarNotice(error.message); }
-  }
-  async function syncGoogleCalendar(session: Session) {
-    if (!session.provider_token || syncingGoogle) { if (!session.provider_token) setCalendarNotice('Google connected, but no Calendar access token was returned. Please connect again.'); return; }
-    window.localStorage.removeItem(GOOGLE_SYNC_PENDING_KEY);
-    setSyncingGoogle(true); setCalendarNotice('Importing Google Calendar busy times…');
-    try {
-      const weekStartIso = startOfDay(weekStart).toISOString(); const weekEndIso = startOfDay(weekEnd).toISOString();
-      const params = new URLSearchParams({ timeMin: weekStartIso, timeMax: weekEndIso, singleEvents: 'true', orderBy: 'startTime' });
-      const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`, { headers: { Authorization: `Bearer ${session.provider_token}` } });
-      if (!response.ok) throw new Error(`Google Calendar returned ${response.status}. Please reconnect and try again.`);
-      const payload = await response.json() as { items?: Array<{ id?: string; summary?: string; status?: string; start?: { dateTime?: string }; end?: { dateTime?: string } }> };
-      const events = (payload.items ?? []).filter((event) => event.status !== 'cancelled' && event.id && event.start?.dateTime && event.end?.dateTime);
-      const { error: deleteError } = await supabase.from('learning_blocks').delete().eq('user_id', session.user.id).eq('source', 'google').gte('starts_at', weekStartIso).lt('starts_at', weekEndIso);
-      if (deleteError) throw deleteError;
-      if (events.length) {
-        const { error: insertError } = await supabase.from('learning_blocks').insert(events.map((event) => ({ user_id: session.user.id, title: event.summary?.trim() || 'Busy', starts_at: event.start!.dateTime!, ends_at: event.end!.dateTime!, kind: 'busy', source: 'google', external_event_id: event.id, external_calendar_id: 'primary' })));
-        if (insertError) throw insertError;
-      }
-      const { data, error: loadError } = await supabase.from('learning_blocks').select('*').gte('starts_at', weekStartIso).lt('starts_at', weekEndIso).order('starts_at');
-      if (loadError) throw loadError;
-      setBlockers((data ?? []).map(rowToBlocker));
-      setCalendarNotice(`Google Calendar connected — imported ${events.length} busy ${events.length === 1 ? 'event' : 'events'}.`);
-    } catch (error) { window.localStorage.setItem(GOOGLE_SYNC_PENDING_KEY, '1'); setCalendarNotice(error instanceof Error ? error.message : 'Google Calendar import failed.'); }
-    finally { setSyncingGoogle(false); }
-  }
-  async function refreshGoogleCalendar() {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session?.provider_token) { await connectGoogle(); return; }
-    await syncGoogleCalendar(data.session);
-  }
-
-  return <main className="min-h-screen bg-[#f5f7f2] text-[#17221b]">
-    <header className="border-b border-[#dce3d9] bg-white/90 px-5 py-3 backdrop-blur md:px-8"><div className="mx-auto flex max-w-[1500px] items-center justify-between">
-      <div className="flex items-center gap-3"><div className="grid size-9 place-items-center rounded-xl bg-[#1f6f4a] text-white"><BookOpen size={19} /></div><div><p className="font-semibold leading-tight tracking-[-0.02em]">Lernzeit</p><p className="text-[11px] text-[#718077]">German, one day at a time</p></div></div>
-      <nav className="hidden items-center gap-2 rounded-xl bg-[#edf3ec] p-1 md:flex" aria-label="Main navigation"><span className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium shadow-sm"><CalendarDays size={16} />Learning plan</span><a href="./practice.html" className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-[#718077] hover:bg-white/60"><Sparkles size={16} />Practice</a></nav>
-      <div className="flex items-center gap-2"><button aria-label="Help" className="grid size-9 place-items-center rounded-lg text-[#718077] hover:bg-[#edf3ec]"><CircleHelp size={18} /></button><a href="./admin.html" aria-label="Administration" className="hidden size-9 place-items-center rounded-lg text-[#718077] hover:bg-[#edf3ec] sm:grid"><Settings size={18} /></a>{user ? <Button variant="outline" className="max-w-48" onClick={() => void supabase.auth.signOut()}><LogOut /><span className="hidden truncate sm:inline">{user.email}</span><span className="sm:hidden">Sign out</span></Button> : <Button variant="outline" onClick={() => setAuthOpen(true)}><LogIn />Sign in</Button>}</div>
-    </div></header>
-    <section className="mx-auto max-w-[1500px] px-5 py-8 md:px-8">
-      <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#3c805d]">Your weekly rhythm</p><h1 className="text-3xl font-semibold tracking-[-0.035em] md:text-4xl">Learning Plan</h1><p className="mt-2 max-w-xl text-sm text-[#66736b]">Make space for German around the life you already have.</p></div><Button onClick={() => openNewBlocker()} className="h-11 rounded-xl bg-[#1f6f4a] px-4 hover:bg-[#185c3d]"><Plus /> Add learning time</Button></div>
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_310px]">
-        <section className="overflow-hidden rounded-2xl border border-[#dce3d9] bg-white shadow-[0_8px_30px_rgba(38,65,48,0.05)]">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e3e8e0] px-4 py-4 sm:px-6"><div className="flex items-center gap-2"><Button variant="outline" size="icon" aria-label="Previous week" onClick={() => setWeekStart((current) => addWeeks(current, -1))}><ChevronLeft /></Button><Button variant="outline" size="icon" aria-label="Next week" onClick={() => setWeekStart((current) => addWeeks(current, 1))}><ChevronRight /></Button><h2 className="ml-2 text-sm font-semibold sm:text-base">{weekLabel}</h2></div><div className="flex items-center gap-4 text-xs text-[#66736b]"><span className="flex items-center gap-2"><i className="size-2.5 rounded-full bg-[#3b8c61]" />Learning</span><span className="flex items-center gap-2"><i className="size-2.5 rounded-full bg-[#cbd3ce]" />Busy</span></div></div>
-          <div className="max-h-[720px] overflow-auto"><div className="min-w-[760px]">
-            <div className="sticky top-0 z-20 grid grid-cols-[64px_repeat(7,1fr)] border-b border-[#e3e8e0] bg-white"><div />{days.map((day) => { const today = isSameDay(day.value, new Date()); return <div key={day.iso} className={`border-l border-[#e8ece6] py-3 text-center ${today ? 'bg-[#f0f7f2]' : ''}`}><p className="text-[11px] font-medium uppercase tracking-wider text-[#718077]">{day.name}</p><p className={`mx-auto mt-1 grid size-8 place-items-center rounded-full text-sm font-semibold ${today ? 'bg-[#1f6f4a] text-white' : ''}`}>{day.date}</p></div>; })}</div>
-            <div className="relative grid h-[1440px] grid-cols-[64px_repeat(7,1fr)] bg-[linear-gradient(to_bottom,transparent_59px,#e8ece6_60px)] bg-[size:100%_60px]">
-              <div className="relative">{Array.from({ length: 24 }, (_, i) => <span key={i} className="absolute right-3 -translate-y-2 text-[10px] text-[#8a968e]" style={{ top: i * 60 }}>{`${String(i).padStart(2, '0')}:00`}</span>)}</div>
-              {days.map((day, dayIndex) => { const today = isSameDay(day.value, new Date()); return <div key={day.iso} className={`relative border-l border-[#e8ece6] ${today ? 'bg-[#f0f7f2]/55' : ''}`} onDoubleClick={() => openNewBlocker(dayIndex)}>{blockers.filter((item) => item.date === day.iso).map((item) => { const top = minutes(item.start); const height = Math.max(minutes(item.end) - minutes(item.start), 34); const content = <><span className="block truncate text-[11px] font-semibold">{item.name}</span><span className="block text-[9px] opacity-70">{formatTime(item.start)}–{formatTime(item.end)}</span></>; return item.kind === 'learning' && item.source !== 'practice' ? <button key={item.id} title="Edit learning time" onClick={() => openEditBlocker(item)} className="group absolute left-1.5 right-1.5 overflow-hidden rounded-lg border border-[#91c3a5] bg-[#dff2e5] px-2 py-1.5 text-left text-[#155838] transition hover:brightness-95" style={{ top, height }}>{content}</button> : item.source === 'practice' ? <div key={item.id} title="Practice time is updated automatically" className="absolute left-1.5 right-1.5 cursor-default overflow-hidden rounded-lg border border-[#91c3a5] bg-[#dff2e5] px-2 py-1.5 text-left text-[#155838]" style={{ top, height }}>{content}</div> : <div key={item.id} title="Imported from Google Calendar" className="absolute left-1.5 right-1.5 cursor-default overflow-hidden rounded-lg border border-[#d5dcd7] bg-[#eef1ef] px-2 py-1.5 text-left text-[#5e6962]" style={{ top, height }}>{content}</div>; })}</div>; })}
-            </div>
-          </div></div>
-        </section>
-        <aside className="space-y-5">
-          <section className="rounded-2xl bg-[#183e2b] p-5 text-white shadow-[0_12px_30px_rgba(24,62,43,0.16)]"><div className="mb-5 flex items-start justify-between"><div className="grid size-10 place-items-center rounded-xl bg-white/10"><Clock3 size={20} /></div><MoreHorizontal className="text-white/60" /></div><p className="text-sm text-white/70">Planned this week</p><p className="mt-1 text-4xl font-semibold tracking-[-0.04em]">{learningHours.toFixed(1)} <span className="text-xl font-normal text-white/65">hours</span></p><div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-[#e8bd78]" style={{ width: `${Math.min((learningHours / 7) * 100, 100)}%` }} /></div><p className="mt-2 text-xs text-white/60">Weekly goal: 7 hours</p></section>
-          <section className="rounded-2xl border border-[#dce3d9] bg-white p-5"><div className="flex items-start gap-3"><div className="grid size-9 place-items-center rounded-lg bg-[#eef3fb] text-[#3674bb]"><Cloud size={18} /></div><div><h2 className="font-semibold">Your calendar</h2><p className="mt-0.5 text-xs leading-relaxed text-[#718077]">Bring in busy times to protect your study plan.</p></div></div><div className="mt-5 space-y-2.5">{SOURCES.map((source) => <div key={source.id} className="flex items-center gap-2"><button disabled={syncingGoogle} onClick={() => void connectGoogle()} className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-[#e1e6df] p-3 text-left transition hover:border-[#aac4b2] hover:bg-[#f7faf7] disabled:opacity-60"><span className="grid size-8 place-items-center rounded-lg bg-[#f0f3f1] text-xs font-bold" style={{ color: source.color }}>{source.mark}</span><span className="min-w-0 flex-1"><span className="block text-sm font-medium">{source.label}</span><span className="block truncate text-[11px] text-[#7b8780]">{syncingGoogle ? 'Importing busy times…' : source.detail}</span></span><Plus size={15} className="text-[#829087]" /></button><Button variant="outline" size="icon" disabled={syncingGoogle} onClick={() => void refreshGoogleCalendar()} aria-label="Refresh Google Calendar" title="Refresh Google Calendar" className="size-12 shrink-0 rounded-xl"><RefreshCw className={syncingGoogle ? 'animate-spin' : ''} /></Button></div>)}</div>{calendarNotice && <p className="mt-3 rounded-lg bg-[#f3f8f4] p-3 text-xs leading-relaxed text-[#42604d]">{calendarNotice}</p>}</section>
-          <section className="rounded-2xl border border-[#eadfc7] bg-[#fffaf0] p-4"><p className="text-xs font-semibold text-[#7b5a20]">Planning tip</p><p className="mt-1 text-xs leading-relaxed text-[#806c49]">Short, repeatable sessions beat the occasional marathon. Try 30 minutes at the same time each day.</p></section>
-        </aside>
-      </div>
-    </section>
-    <footer className="mx-auto flex max-w-[1500px] items-center justify-between px-5 pb-6 text-[11px] text-[#87928a] md:px-8"><span>{user ? 'Synced with your Lernzeit account' : 'Saved on this device'}</span><span>Version {APP_VERSION}</span></footer>
-    <Dialog open={authOpen} onOpenChange={setAuthOpen}><DialogContent className="max-w-md rounded-2xl p-5"><DialogHeader><DialogTitle className="text-xl">{authMode === 'signin' ? 'Welcome back' : 'Create your Lernzeit account'}</DialogTitle><DialogDescription>Sign in to keep your learning plan safely synced across devices.</DialogDescription></DialogHeader><div className="space-y-4 py-2"><label className="block text-sm font-medium">Email<Input className="mt-2 h-10" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" /></label><label className="block text-sm font-medium">Password<Input className="mt-2 h-10" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={authMode === 'signin' ? 'current-password' : 'new-password'} /></label>{authMessage && <p className="rounded-lg bg-[#f4f7f3] p-3 text-xs text-[#526158]">{authMessage}</p>}<button className="text-xs font-medium text-[#1f6f4a] underline-offset-4 hover:underline" onClick={() => { setAuthMode(authMode === 'signin' ? 'signup' : 'signin'); setAuthMessage(''); }}>{authMode === 'signin' ? 'New here? Create an account' : 'Already have an account? Sign in'}</button></div><DialogFooter className="-mx-5 -mb-5 px-5"><Button variant="outline" onClick={() => setAuthOpen(false)}>Cancel</Button><Button disabled={authBusy || !email || password.length < 6} onClick={() => void submitAuth()} className="bg-[#1f6f4a] hover:bg-[#185c3d]">{authBusy ? 'Please wait…' : authMode === 'signin' ? 'Sign in' : 'Create account'}</Button></DialogFooter></DialogContent></Dialog>
-    <Dialog open={addOpen} onOpenChange={(open) => { setAddOpen(open); if (!open) setEditingBlocker(null); }}><DialogContent className="max-w-md rounded-2xl p-5"><DialogHeader><DialogTitle className="text-xl">{editingBlocker ? 'Edit learning time' : 'Add learning time'}</DialogTitle><DialogDescription>{editingBlocker ? 'Update this session or remove it from your plan.' : 'Protect a little time for focused German practice.'}</DialogDescription></DialogHeader><div className="space-y-4 py-2"><label className="block text-sm font-medium">Name<Input className="mt-2 h-10" value={name} onChange={(event) => setName(event.target.value)} /></label><label className="block text-sm font-medium">Day<select className="mt-2 h-10 w-full rounded-lg border border-input bg-white px-3 text-sm" value={selectedDay} onChange={(event) => setSelectedDay(Number(event.target.value))}>{days.map((day, index) => <option key={day.iso} value={index}>{format(day.value, 'EEE, MMMM d')}</option>)}</select></label><div className="grid grid-cols-2 gap-3"><label className="block text-sm font-medium">Starts<Input className="mt-2 h-10" type="time" value={start} onChange={(event) => setStart(event.target.value)} /></label><label className="block text-sm font-medium">Ends<Input className="mt-2 h-10" type="time" value={end} onChange={(event) => setEnd(event.target.value)} /></label></div>{notice && <p className="text-xs text-red-600">{notice}</p>}</div><DialogFooter className="-mx-5 -mb-5 justify-between px-5 sm:justify-between">{editingBlocker ? <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => { void removeBlocker(editingBlocker); setAddOpen(false); setEditingBlocker(null); }}><Trash2 />Delete</Button> : <span />}<div className="flex gap-2"><Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button><Button onClick={() => void addBlocker()} className="bg-[#1f6f4a] hover:bg-[#185c3d]"><Check />{editingBlocker ? 'Save changes' : 'Add to plan'}</Button></div></DialogFooter></DialogContent></Dialog>
-    <Dialog open={connectOpen} onOpenChange={setConnectOpen}><DialogContent className="max-w-md rounded-2xl p-5"><DialogHeader><DialogTitle className="text-xl">Coming next</DialogTitle><DialogDescription>Google Calendar is ready. Outlook and Apple Calendar connections are the next integrations.</DialogDescription></DialogHeader><div className="rounded-xl border border-[#dfe7df] bg-[#f3f8f4] p-4 text-sm text-[#42604d]">Outlook will use secure Microsoft sign-in. Apple Calendar will support an iCalendar (.ics) feed or file.</div><DialogFooter className="-mx-5 -mb-5 px-5"><Button onClick={() => setConnectOpen(false)} className="bg-[#1f6f4a] hover:bg-[#185c3d]">Got it</Button></DialogFooter></DialogContent></Dialog>
-  </main>;
-}
+function BattleList({user,battles,loading}:{user:User|null;battles:OpenBattle[];loading:boolean}){if(!user)return <div className="mt-5 rounded-2xl border border-dashed border-white/20 bg-black/10 p-8 text-center"><Users className="mx-auto text-white/35"/><p className="mt-3 font-bold">Sign in to reveal live battles</p><p className="mt-1 text-sm text-white/45">Open lobbies are visible to Lernzeit players.</p></div>;if(loading)return <div className="mt-5 animate-pulse rounded-2xl bg-white/5 p-8 text-center text-white/40">Scanning for battles…</div>;if(!battles.length)return <div className="mt-5 rounded-2xl border border-dashed border-white/20 p-8 text-center"><Sparkles className="mx-auto text-[#d9ff59]"/><p className="mt-3 font-bold">The arena is quiet… for now.</p><a href="./contest.html" className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#d9ff59]">Start the first battle <ArrowRight size={15}/></a></div>;return <div className="mt-5 space-y-3">{battles.slice(0,5).map((battle,index)=><a href="./contest.html" key={battle.id} className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[.06] p-3 transition hover:border-[#d9ff59]/50 hover:bg-white/10"><span className={`grid size-11 shrink-0 place-items-center rounded-xl font-black ${index===0?'bg-[#d9ff59] text-[#171126]':'bg-[#6d4aff] text-white'}`}>{battle.level}</span><span className="min-w-0 flex-1"><strong className="block truncate">{battle.organizer_name}&apos;s battle</strong><span className="text-xs text-white/45">{battle.question_count} questions</span></span><span className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-bold"><Users size={13}/>{battle.player_count}/10</span><Play size={17} className="text-[#d9ff59] transition group-hover:translate-x-1"/></a>)}</div>;}
