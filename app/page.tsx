@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 
-const APP_VERSION='0.14.1';
+const APP_VERSION='0.14.2';
 type OpenBattle={id:string;level:string;question_count:number;organizer_name:string;player_count:number;created_at:string};
 
 export default function Home(){
