@@ -130,3 +130,81 @@ body { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Se
     @apply font-sans;
   }
 }
+
+/* Lernzeit visual modes --------------------------------------------------- */
+.theme-switcher {
+  position: fixed; z-index: 100; right: 1rem; bottom: 1rem; display: flex;
+  gap: .2rem; padding: .3rem; border: 1px solid rgb(255 255 255 / .16);
+  border-radius: 1rem; background: rgb(17 13 37 / .9); color: white;
+  box-shadow: 0 12px 70px rgb(0 0 0 / .28); backdrop-filter: blur(18px);
+}
+.theme-switcher button { display:flex; align-items:center; gap:.35rem; border-radius:.7rem; padding:.5rem .65rem; font-size:.72rem; font-weight:800; color:rgb(255 255 255 / .55); transition:.18s ease; }
+.theme-switcher button:hover { color:white; background:rgb(255 255 255 / .08); }
+.theme-switcher button[aria-pressed="true"] { color:#171126; background:#d9ff59; box-shadow:0 2px 12px rgb(217 255 89 / .25); }
+
+/* Arcade is the playful default and carries the home-page energy throughout. */
+html:not([data-theme]), html[data-theme="arcade"] { color-scheme:dark; }
+html[data-theme="arcade"] body { background:#100c24; }
+html[data-theme="arcade"] main:not(.home-page) { background:radial-gradient(circle at 85% 5%,#39236d 0,transparent 25rem),#100c24 !important; color:#fff !important; }
+html[data-theme="arcade"] main:not(.home-page) > header { border-color:rgb(255 255 255 / .1) !important; background:rgb(16 12 36 / .88) !important; color:#fff !important; backdrop-filter:blur(18px); }
+html[data-theme="arcade"] main:not(.home-page) article,
+html[data-theme="arcade"] main:not(.home-page) section > div[class*="bg-white"],
+html[data-theme="arcade"] main:not(.home-page) div[class*="bg-white"] { border-color:rgb(255 255 255 / .12) !important; background-color:#1b1538 !important; color:#fff !important; box-shadow:0 18px 55px rgb(4 2 16 / .35); }
+html[data-theme="arcade"] main:not(.home-page) input,
+html[data-theme="arcade"] main:not(.home-page) select { border-color:rgb(255 255 255 / .14) !important; background:#251d49 !important; color:#fff !important; }
+html[data-theme="arcade"] main:not(.home-page) input::placeholder { color:rgb(255 255 255 / .35); }
+html[data-theme="arcade"] main:not(.home-page) [class*="text-[#718077]"],
+html[data-theme="arcade"] main:not(.home-page) [class*="text-[#87928a]"],
+html[data-theme="arcade"] main:not(.home-page) [class*="text-[#637067]"] { color:#b8aed3 !important; }
+html[data-theme="arcade"] main:not(.home-page) [class*="bg-[#edf3ec]"],
+html[data-theme="arcade"] main:not(.home-page) [class*="bg-[#f8faf7]"],
+html[data-theme="arcade"] main:not(.home-page) [class*="bg-[#f7f6fb]"] { background:#29204f !important; color:#fff !important; }
+html[data-theme="arcade"] main:not(.home-page) [class*="bg-[#1f6f4a]"] { background:#6d4aff !important; }
+html[data-theme="arcade"] main:not(.home-page) h1,
+html[data-theme="arcade"] main:not(.home-page) h2,
+html[data-theme="arcade"] main:not(.home-page) h3 { letter-spacing:-.035em; font-weight:850; }
+
+/* Classic: warm paper, ink blue, restrained spacing and grown-up typography. */
+html[data-theme="classic"] { color-scheme:light; --radius:.45rem; }
+html[data-theme="classic"] body { background:#f2efe8; color:#1d2b30; font-family:Georgia,"Times New Roman",serif; }
+html[data-theme="classic"] main { background:#f2efe8 !important; color:#1d2b30 !important; }
+html[data-theme="classic"] header { border-color:#d8d1c3 !important; background:rgb(250 248 243 / .94) !important; color:#1d2b30 !important; box-shadow:0 1px 0 rgb(54 67 70 / .04); }
+html[data-theme="classic"] h1,html[data-theme="classic"] h2,html[data-theme="classic"] h3 { color:#18333b !important; font-family:Georgia,"Times New Roman",serif; letter-spacing:-.025em !important; }
+html[data-theme="classic"] article,
+html[data-theme="classic"] [role="dialog"],
+html[data-theme="classic"] div[class*="bg-white"] { border-color:#d8d1c3 !important; background-color:#fbfaf7 !important; color:#1d2b30 !important; box-shadow:0 10px 28px rgb(63 54 39 / .07) !important; }
+html[data-theme="classic"] [class*="bg-gradient"],
+html[data-theme="classic"] [class*="bg-[linear-gradient"] { background-image:none !important; background-color:#234955 !important; }
+html[data-theme="classic"] .home-page [class*="text-white"],
+html[data-theme="classic"] .home-page { color:#1d2b30 !important; }
+html[data-theme="classic"] .home-page [class*="text-white/"] { color:#627177 !important; }
+html[data-theme="classic"] .home-page a[class*="bg-[#d9ff59]"] { background:#b58a42 !important; color:white !important; box-shadow:none !important; }
+html[data-theme="classic"] [class*="text-[#d9ff59]"],html[data-theme="classic"] [class*="text-[#62e6ff]"],html[data-theme="classic"] [class*="text-[#ff83aa]"] { color:#8b642c !important; }
+html[data-theme="classic"] [class*="bg-[#d9ff59]"],html[data-theme="classic"] [class*="bg-[#62e6ff]"],html[data-theme="classic"] [class*="bg-[#ff6f9d]"] { background:#b58a42 !important; color:white !important; }
+html[data-theme="classic"] input,html[data-theme="classic"] select { border-color:#cfc7b8 !important; background:#fff !important; color:#1d2b30 !important; }
+html[data-theme="classic"] button,html[data-theme="classic"] a { font-family:Inter,ui-sans-serif,sans-serif; }
+html[data-theme="classic"] .theme-switcher { border-color:#d2c9b8; background:#fbfaf7; color:#1d2b30; box-shadow:0 14px 35px rgb(63 54 39 / .15); }
+html[data-theme="classic"] .theme-switcher button { color:#697579; }
+html[data-theme="classic"] .theme-switcher button[aria-pressed="true"] { background:#234955; color:white; box-shadow:none; }
+
+/* Black: terminal-like, high contrast, compact and deliberately technical. */
+html[data-theme="black"] { color-scheme:dark; --radius:.25rem; }
+html[data-theme="black"] body { background:#05070a; color:#e7edf3; font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace; }
+html[data-theme="black"] main { background:linear-gradient(rgb(18 205 145 / .025) 1px,transparent 1px),linear-gradient(90deg,rgb(18 205 145 / .025) 1px,transparent 1px),#05070a !important; background-size:24px 24px !important; color:#e7edf3 !important; }
+html[data-theme="black"] header { border-color:#26303b !important; background:rgb(5 7 10 / .94) !important; color:#e7edf3 !important; }
+html[data-theme="black"] article,
+html[data-theme="black"] [role="dialog"],
+html[data-theme="black"] div[class*="bg-white"] { border-color:#27313b !important; background-color:#0d1117 !important; color:#e7edf3 !important; box-shadow:0 0 0 1px rgb(94 234 212 / .025) !important; }
+html[data-theme="black"] [class*="bg-gradient"],html[data-theme="black"] [class*="bg-[linear-gradient"] { background-image:none !important; background-color:#10161d !important; }
+html[data-theme="black"] [class*="text-white/"] { color:#8996a4 !important; }
+html[data-theme="black"] [class*="text-[#718077]"],html[data-theme="black"] [class*="text-[#87928a]"] { color:#8996a4 !important; }
+html[data-theme="black"] [class*="text-[#d9ff59]"],html[data-theme="black"] [class*="text-[#62e6ff]"],html[data-theme="black"] [class*="text-[#ff83aa]"] { color:#5eead4 !important; }
+html[data-theme="black"] [class*="bg-[#d9ff59]"],html[data-theme="black"] [class*="bg-[#62e6ff]"],html[data-theme="black"] [class*="bg-[#ff6f9d]"],html[data-theme="black"] [class*="bg-[#1f6f4a]"] { background:#12cd91 !important; color:#03110c !important; box-shadow:none !important; }
+html[data-theme="black"] input,html[data-theme="black"] select { border-color:#303b47 !important; background:#080b10 !important; color:#e7edf3 !important; }
+html[data-theme="black"] input::placeholder { color:#53606e; }
+html[data-theme="black"] h1,html[data-theme="black"] h2,html[data-theme="black"] h3,html[data-theme="black"] button,html[data-theme="black"] a { font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace; letter-spacing:-.02em; }
+html[data-theme="black"] .theme-switcher { border-color:#2b3742; border-radius:.45rem; background:#080b10; box-shadow:0 10px 40px #000; }
+html[data-theme="black"] .theme-switcher button { border-radius:.25rem; color:#748392; }
+html[data-theme="black"] .theme-switcher button[aria-pressed="true"] { background:#12cd91; color:#03110c; box-shadow:none; }
+
+@media (max-width:640px){.theme-switcher{right:.6rem;bottom:.6rem}.theme-switcher button span{display:none}.theme-switcher button{padding:.55rem}}
