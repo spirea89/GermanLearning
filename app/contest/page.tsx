@@ -5,7 +5,7 @@ import type { User } from '@supabase/supabase-js';
 import { ArrowLeft, Check, Copy, Crown, LogIn, Play, Plus, Swords, Trophy, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button'; import { Input } from '@/components/ui/input'; import { supabase } from '@/lib/supabase';
 
-const APP_VERSION='0.11.0', STORAGE='lernzeit-active-contest';
+const APP_VERSION='0.11.1', STORAGE='lernzeit-active-contest';
 type Contest={id:string;join_code:string;organizer_id:string;level:string;question_count:number;status:'lobby'|'active'|'finished'};
 type Player={id:string;user_id:string;display_name:string;score:number;answered_count:number};
 type QuestionData={game:string;title:string;prompt:string;focus:string;translation:string;answer_labels:string[]};
