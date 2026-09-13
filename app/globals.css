@@ -141,6 +141,11 @@ body { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Se
 .theme-switcher button { display:flex; align-items:center; gap:.35rem; border-radius:.7rem; padding:.5rem .65rem; font-size:.72rem; font-weight:800; color:rgb(255 255 255 / .55); transition:.18s ease; }
 .theme-switcher button:hover { color:white; background:rgb(255 255 255 / .08); }
 .theme-switcher button[aria-pressed="true"] { color:#171126; background:#d9ff59; box-shadow:0 2px 12px rgb(217 255 89 / .25); }
+.main-nav { background:rgb(255 255 255 / .08); }
+.main-nav-link { color:rgb(255 255 255 / .72) !important; transition:background-color .18s ease,color .18s ease; }
+.main-nav-link:hover { background:rgb(255 255 255 / .12); color:#fff !important; }
+.main-nav-link--active { background:#fff !important; color:#171126 !important; }
+.main-nav-link--active * { color:#171126 !important; }
 
 /* Arcade is the playful default and carries the home-page energy throughout. */
 html:not([data-theme]), html[data-theme="arcade"] { color-scheme:dark; }
@@ -186,6 +191,11 @@ html[data-theme="classic"] button,html[data-theme="classic"] a { font-family:Int
 html[data-theme="classic"] .theme-switcher { border-color:#d2c9b8; background:#fbfaf7; color:#1d2b30; box-shadow:0 14px 35px rgb(63 54 39 / .15); }
 html[data-theme="classic"] .theme-switcher button { color:#697579; }
 html[data-theme="classic"] .theme-switcher button[aria-pressed="true"] { background:#234955; color:white; box-shadow:none; }
+html[data-theme="classic"] .main-nav { background:#e7e1d6 !important; }
+html[data-theme="classic"] .main-nav-link { color:#40545a !important; }
+html[data-theme="classic"] .main-nav-link:hover { background:#d8d0c1 !important; color:#18333b !important; }
+html[data-theme="classic"] .main-nav-link--active { background:#234955 !important; color:#fff !important; }
+html[data-theme="classic"] .main-nav-link--active * { color:#fff !important; }
 
 /* Black: terminal-like, high contrast, compact and deliberately technical. */
 html[data-theme="black"] { color-scheme:dark; --radius:.25rem; }
@@ -206,6 +216,11 @@ html[data-theme="black"] h1,html[data-theme="black"] h2,html[data-theme="black"]
 html[data-theme="black"] .theme-switcher { border-color:#2b3742; border-radius:.45rem; background:#080b10; box-shadow:0 10px 40px #000; }
 html[data-theme="black"] .theme-switcher button { border-radius:.25rem; color:#748392; }
 html[data-theme="black"] .theme-switcher button[aria-pressed="true"] { background:#f4f4f5; color:#050505; box-shadow:none; }
+html[data-theme="black"] .main-nav { background:#171717 !important; border-color:#383838 !important; }
+html[data-theme="black"] .main-nav-link { color:#d4d4d4 !important; }
+html[data-theme="black"] .main-nav-link:hover { background:#303030 !important; color:#fff !important; }
+html[data-theme="black"] .main-nav-link--active { background:#f4f4f5 !important; color:#050505 !important; }
+html[data-theme="black"] .main-nav-link--active * { color:#050505 !important; }
 
 /* Contrast safeguards: custom utility colors must stay legible after a theme swap. */
 html[data-theme="arcade"] main:not(.home-page) [class*="text-[#"] { color:#f8f7ff !important; }

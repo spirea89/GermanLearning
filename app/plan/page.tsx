@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 
-const APP_VERSION = '0.14.3';
+const APP_VERSION = '0.14.4';
 const STORAGE_KEY = 'lernzeit-blockers-v1';
 const GOOGLE_SYNC_PENDING_KEY = 'lernzeit-google-sync-pending';
 type Blocker = { id: string; name: string; date: string; start: string; end: string; kind: 'learning' | 'busy'; source?: string };
@@ -171,7 +171,7 @@ export default function Home() {
   return <main className="min-h-screen bg-[#f5f7f2] text-[#17221b]">
     <header className="border-b border-[#dce3d9] bg-white/90 px-5 py-3 backdrop-blur md:px-8"><div className="mx-auto flex max-w-[1500px] items-center justify-between">
       <div className="flex items-center gap-3"><div className="grid size-9 place-items-center rounded-xl bg-[#1f6f4a] text-white"><BookOpen size={19} /></div><div><p className="font-semibold leading-tight tracking-[-0.02em]">Lernzeit</p><p className="text-[11px] text-[#718077]">German, one day at a time</p></div></div>
-      <nav className="hidden items-center gap-2 rounded-xl bg-[#edf3ec] p-1 md:flex" aria-label="Main navigation"><a href="./" className="rounded-lg px-4 py-2 text-sm text-[#718077] hover:bg-white/60">Battles</a><span className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium shadow-sm"><CalendarDays size={16} />Learning Plan</span><a href="./practice.html" className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-[#718077] hover:bg-white/60"><Sparkles size={16} />Games</a></nav>
+      <nav className="main-nav hidden items-center gap-2 rounded-xl p-1 md:flex" aria-label="Main navigation"><a href="./" className="main-nav-link rounded-lg px-4 py-2 text-sm">Battles</a><span className="main-nav-link main-nav-link--active flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium shadow-sm"><CalendarDays size={16} />Learning Plan</span><a href="./practice.html" className="main-nav-link flex items-center gap-2 rounded-lg px-4 py-2 text-sm"><Sparkles size={16} />Games</a></nav>
       <div className="flex items-center gap-2"><button aria-label="Help" className="grid size-9 place-items-center rounded-lg text-[#718077] hover:bg-[#edf3ec]"><CircleHelp size={18} /></button><a href="./admin.html" aria-label="Administration" className="hidden size-9 place-items-center rounded-lg text-[#718077] hover:bg-[#edf3ec] sm:grid"><Settings size={18} /></a>{user ? <Button variant="outline" className="max-w-48" onClick={() => void supabase.auth.signOut()}><LogOut /><span className="hidden truncate sm:inline">{user.email}</span><span className="sm:hidden">Sign out</span></Button> : <Button variant="outline" onClick={() => setAuthOpen(true)}><LogIn />Sign in</Button>}</div>
     </div></header>
     <section className="mx-auto max-w-[1500px] px-5 py-8 md:px-8">
