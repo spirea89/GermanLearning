@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { ThemeSwitcher } from '@/components/theme-switcher';
+import { MobileNav } from '@/components/mobile-nav';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://spirea89.github.io/GermanLearning/'),
@@ -19,4 +20,4 @@ export const metadata: Metadata = {
   },
 };
 const themeScript=`(()=>{try{const t=localStorage.getItem('lernzeit-theme')||'arcade';document.documentElement.dataset.theme=t;if(t==='black')document.documentElement.classList.add('dark')}catch{}})()`;
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="en" suppressHydrationWarning><head><script dangerouslySetInnerHTML={{__html:themeScript}} /></head><body><ThemeSwitcher/>{children}</body></html>; }
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="en" suppressHydrationWarning><head><script dangerouslySetInnerHTML={{__html:themeScript}} /></head><body><ThemeSwitcher/><MobileNav/>{children}</body></html>; }
