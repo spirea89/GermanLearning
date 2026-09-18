@@ -171,35 +171,39 @@ html[data-theme="arcade"] main:not(.home-page) h1,
 html[data-theme="arcade"] main:not(.home-page) h2,
 html[data-theme="arcade"] main:not(.home-page) h3 { letter-spacing:-.035em; font-weight:850; }
 
-/* Classic: warm paper, ink blue, restrained spacing and grown-up typography. */
-html[data-theme="classic"] { color-scheme:light; --radius:.45rem; }
-html[data-theme="classic"] body { background:#f2efe8; color:#1d2b30; font-family:Georgia,"Times New Roman",serif; }
-html[data-theme="classic"] main { background:#f2efe8 !important; color:#1d2b30 !important; }
-html[data-theme="classic"] header { border-color:#d8d1c3 !important; background:rgb(250 248 243 / .94) !important; color:#1d2b30 !important; box-shadow:0 1px 0 rgb(54 67 70 / .04); }
-html[data-theme="classic"] h1,html[data-theme="classic"] h2,html[data-theme="classic"] h3 { color:#18333b !important; font-family:Georgia,"Times New Roman",serif; letter-spacing:-.025em !important; }
+/* Classic: coachbuilt comfort—ivory hide, walnut veneer, racing green and brass. */
+html[data-theme="classic"] { color-scheme:light; --radius:.85rem; }
+html[data-theme="classic"] body { background:#e9e0d2; color:#2a211c; font-family:"Avenir Next",Avenir,Inter,ui-sans-serif,sans-serif; }
+html[data-theme="classic"] main { background:radial-gradient(circle at 86% 2%,rgb(187 151 92 / .16),transparent 30rem),linear-gradient(135deg,#f5f0e7 0%,#e9dfd0 100%) !important; color:#2a211c !important; }
+html[data-theme="classic"] header { border-color:#bda477 !important; background:rgb(247 242 232 / .94) !important; color:#2a211c !important; box-shadow:inset 0 -1px rgb(167 127 62 / .28),0 8px 30px rgb(58 39 27 / .08); backdrop-filter:blur(18px); }
+html[data-theme="classic"] h1,html[data-theme="classic"] h2,html[data-theme="classic"] h3 { color:#2b1d17 !important; font-family:Iowan Old Style,Palatino Linotype,Palatino,Georgia,serif; font-weight:600 !important; letter-spacing:-.032em !important; }
 html[data-theme="classic"] article,
 html[data-theme="classic"] [role="dialog"],
-html[data-theme="classic"] div[class*="bg-white"] { border-color:#d8d1c3 !important; background-color:#fbfaf7 !important; color:#1d2b30 !important; box-shadow:0 10px 28px rgb(63 54 39 / .07) !important; }
+html[data-theme="classic"] div[class*="bg-white"] { border-color:#c9b488 !important; background:linear-gradient(145deg,#fffdf8,#f5eee2) !important; color:#2a211c !important; box-shadow:0 18px 45px rgb(66 43 28 / .1),inset 0 1px rgb(255 255 255 / .85) !important; }
 html[data-theme="classic"] [class*="bg-gradient"],
-html[data-theme="classic"] [class*="bg-[linear-gradient"] { background-image:none !important; background-color:#e8e2d7 !important; }
-html[data-theme="classic"] .home-page [class*="text-white"],
-html[data-theme="classic"] .home-page { color:#1d2b30 !important; }
-html[data-theme="classic"] .home-page [class*="text-white/"] { color:#627177 !important; }
-html[data-theme="classic"] .home-page a[class*="bg-[#d9ff59]"] { background:#b58a42 !important; color:white !important; box-shadow:none !important; }
-html[data-theme="classic"] [class*="text-[#d9ff59]"],html[data-theme="classic"] [class*="text-[#62e6ff]"],html[data-theme="classic"] [class*="text-[#ff83aa]"] { color:#8b642c !important; }
-html[data-theme="classic"] [class~="bg-[#d9ff59]"],html[data-theme="classic"] [class~="bg-[#62e6ff]"],html[data-theme="classic"] [class~="bg-[#ff6f9d]"] { background:#b58a42 !important; color:white !important; }
-html[data-theme="classic"] input,html[data-theme="classic"] select { border-color:#cfc7b8 !important; background:#fff !important; color:#1d2b30 !important; }
-html[data-theme="classic"] button,html[data-theme="classic"] a { font-family:Inter,ui-sans-serif,sans-serif; }
-html[data-theme="classic"] .theme-switcher { border-color:#d2c9b8; background:#fbfaf7; color:#1d2b30; box-shadow:0 14px 35px rgb(63 54 39 / .15); }
-html[data-theme="classic"] .theme-switcher button { color:#697579; }
-html[data-theme="classic"] .theme-switcher button[aria-pressed="true"] { background:#234955; color:white; box-shadow:none; }
-html[data-theme="classic"] .main-nav { background:#e7e1d6 !important; }
-html[data-theme="classic"] .main-nav-link { color:#40545a !important; }
-html[data-theme="classic"] .main-nav-link:hover { background:#d8d0c1 !important; color:#18333b !important; }
-html[data-theme="classic"] .main-nav-link--active { background:#234955 !important; color:#fff !important; }
-html[data-theme="classic"] .main-nav-link--active * { color:#fff !important; }
-html[data-theme="classic"] .game-secondary-action { background:#fff !important; border-color:#b8ad9a !important; color:#18333b !important; }
-html[data-theme="classic"] .game-secondary-action:hover { background:#e7e1d6 !important; color:#18333b !important; }
+html[data-theme="classic"] [class*="bg-[linear-gradient"] { background-image:none !important; background-color:#efe5d5 !important; }
+html[data-theme="classic"] .home-page { color:#2a211c !important; }
+html[data-theme="classic"] .home-page [class*="text-white"] { color:#2a211c !important; }
+html[data-theme="classic"] .home-page [class*="text-white/"] { color:#6f6258 !important; }
+html[data-theme="classic"] .home-page [class*="bg-white/"] { border-color:#cfba91 !important; background:rgb(255 252 245 / .72) !important; box-shadow:0 16px 40px rgb(66 43 28 / .08); }
+html[data-theme="classic"] .home-page a[class*="bg-[#d9ff59]"] { background:#263f34 !important; color:#fffaf0 !important; box-shadow:4px 4px 0 #b38a46 !important; }
+html[data-theme="classic"] [class*="text-[#d9ff59]"],html[data-theme="classic"] [class*="text-[#62e6ff]"],html[data-theme="classic"] [class*="text-[#ff83aa]"] { color:#815c27 !important; }
+html[data-theme="classic"] [class~="bg-[#d9ff59]"],html[data-theme="classic"] [class~="bg-[#62e6ff]"],html[data-theme="classic"] [class~="bg-[#ff6f9d]"] { background:#b38a46 !important; color:#fffaf0 !important; }
+html[data-theme="classic"] input,html[data-theme="classic"] select,html[data-theme="classic"] textarea { border-color:#bda97f !important; background:#fffdf8 !important; color:#2a211c !important; box-shadow:inset 0 1px 3px rgb(76 47 28 / .08); }
+html[data-theme="classic"] input:focus,html[data-theme="classic"] select:focus,html[data-theme="classic"] textarea:focus { border-color:#9a7135 !important; box-shadow:0 0 0 3px rgb(179 138 70 / .18) !important; }
+html[data-theme="classic"] button,html[data-theme="classic"] a { font-family:"Avenir Next",Avenir,Inter,ui-sans-serif,sans-serif; }
+html[data-theme="classic"] button[class~="bg-[#1f6f4a]"],html[data-theme="classic"] button[class~="bg-[#2d3d63]"],html[data-theme="classic"] button[class~="bg-[#5b45a1]"],html[data-theme="classic"] button[class~="bg-[#173f2b]"],html[data-theme="classic"] a[class~="bg-[#5b45a1]"] { background:#263f34 !important; color:#fffaf0 !important; box-shadow:0 5px 14px rgb(38 63 52 / .18); }
+html[data-theme="classic"] .theme-switcher { border-color:#9f7a43; background:#30221b; color:#fff8eb; box-shadow:0 16px 38px rgb(50 31 20 / .24),inset 0 0 0 1px rgb(255 255 255 / .05); }
+html[data-theme="classic"] .theme-switcher button { color:#d7c5a6; }
+html[data-theme="classic"] .theme-switcher button:hover { background:rgb(255 255 255 / .08); color:#fffaf0; }
+html[data-theme="classic"] .theme-switcher button[aria-pressed="true"] { background:#b38a46; color:#211711; box-shadow:inset 0 1px rgb(255 255 255 / .35); }
+html[data-theme="classic"] .main-nav { border:1px solid #d0bf9e; background:#e8decd !important; box-shadow:inset 0 1px rgb(255 255 255 / .65); }
+html[data-theme="classic"] .main-nav-link { color:#5b4b3f !important; }
+html[data-theme="classic"] .main-nav-link:hover { background:#d8c8ac !important; color:#2b1d17 !important; }
+html[data-theme="classic"] .main-nav-link--active { background:#263f34 !important; color:#fffaf0 !important; box-shadow:0 3px 10px rgb(38 63 52 / .2); }
+html[data-theme="classic"] .main-nav-link--active * { color:#fffaf0 !important; }
+html[data-theme="classic"] .game-secondary-action { border-color:#a9854e !important; background:#fffaf0 !important; color:#3f2b20 !important; }
+html[data-theme="classic"] .game-secondary-action:hover { background:#e8dac3 !important; color:#2b1d17 !important; }
 
 /* Black: terminal-like, high contrast, compact and deliberately technical. */
 html[data-theme="black"] { color-scheme:dark; --radius:.25rem; }
@@ -298,6 +302,29 @@ html[data-theme="black"] main :is(
 ) { color:#050505 !important; }
 html[data-theme="arcade"] main:not(.home-page) :is([class~="bg-[#eef8f1]"],[class~="bg-[#fff3f0]"],[class~="bg-[#fffaf0]"]) *,
 html[data-theme="black"] main :is([class~="bg-[#eef8f1]"],[class~="bg-[#fff3f0]"],[class~="bg-[#fffaf0]"]) * { color:inherit !important; }
+
+/* Classic finishing: walnut feature panels, brass details and ivory upholstery. */
+html[data-theme="classic"] article > div[class*="bg-[linear-gradient"] {
+  border-bottom:1px solid #b18a4d;
+  background:linear-gradient(135deg,#2b1d17 0%,#4b3226 55%,#263f34 100%) !important;
+  color:#fff8eb !important;
+}
+html[data-theme="classic"] article > div[class*="bg-[linear-gradient"] * { color:inherit !important; }
+html[data-theme="classic"] :is([class~="bg-[#edf5ef]"],[class~="bg-[#e4f2e8]"],[class~="bg-[#e7eefb]"],[class~="bg-[#ece9fb]"],[class~="bg-[#eef3fb]"]) {
+  border:1px solid #cfbb92;
+  background:#f0e5d3 !important;
+  color:#49372b !important;
+}
+html[data-theme="classic"] :is([class~="bg-[#eef8f1]"],[class~="bg-[#fff3f0]"],[class~="bg-[#fffaf0]"]) {
+  border-color:#c9ad78 !important;
+  background:#fbf3e5 !important;
+  color:#4a3527 !important;
+}
+html[data-theme="classic"] .battle-visibility-option { border-color:#c7b184; background:#fffaf0 !important; color:#5b4b3f !important; }
+html[data-theme="classic"] .battle-visibility-option.is-selected { border-color:#9c783f; background:#263f34 !important; color:#fffaf0 !important; box-shadow:inset 0 0 0 1px rgb(255 255 255 / .12),0 6px 16px rgb(38 63 52 / .16); }
+html[data-theme="classic"] .mobile-nav { background:#f8f1e5 !important; border-color:#bda477 !important; box-shadow:0 -10px 30px rgb(66 43 28 / .12); }
+html[data-theme="classic"] .mobile-nav a { color:#655548 !important; }
+html[data-theme="classic"] .mobile-nav a[aria-current="page"] { background:#263f34 !important; color:#fffaf0 !important; }
 
 @media (max-width:640px){.theme-switcher{right:.6rem;bottom:.6rem}.theme-switcher button span{display:none}.theme-switcher button{padding:.55rem}}
 
