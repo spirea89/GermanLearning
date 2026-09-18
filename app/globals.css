@@ -146,6 +146,8 @@ body { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Se
 .main-nav-link:hover { background:rgb(255 255 255 / .12); color:#fff !important; }
 .main-nav-link--active { background:#fff !important; color:#171126 !important; }
 .main-nav-link--active * { color:#171126 !important; }
+.game-secondary-action { background:#29204f !important; border-color:#665b8b !important; color:#fff !important; }
+.game-secondary-action:hover { background:#352966 !important; color:#fff !important; }
 
 /* Arcade is the playful default and carries the home-page energy throughout. */
 html:not([data-theme]), html[data-theme="arcade"] { color-scheme:dark; }
@@ -196,6 +198,8 @@ html[data-theme="classic"] .main-nav-link { color:#40545a !important; }
 html[data-theme="classic"] .main-nav-link:hover { background:#d8d0c1 !important; color:#18333b !important; }
 html[data-theme="classic"] .main-nav-link--active { background:#234955 !important; color:#fff !important; }
 html[data-theme="classic"] .main-nav-link--active * { color:#fff !important; }
+html[data-theme="classic"] .game-secondary-action { background:#fff !important; border-color:#b8ad9a !important; color:#18333b !important; }
+html[data-theme="classic"] .game-secondary-action:hover { background:#e7e1d6 !important; color:#18333b !important; }
 
 /* Black: terminal-like, high contrast, compact and deliberately technical. */
 html[data-theme="black"] { color-scheme:dark; --radius:.25rem; }
@@ -221,6 +225,8 @@ html[data-theme="black"] .main-nav-link { color:#d4d4d4 !important; }
 html[data-theme="black"] .main-nav-link:hover { background:#303030 !important; color:#fff !important; }
 html[data-theme="black"] .main-nav-link--active { background:#f4f4f5 !important; color:#050505 !important; }
 html[data-theme="black"] .main-nav-link--active * { color:#050505 !important; }
+html[data-theme="black"] .game-secondary-action { background:#171717 !important; border-color:#525252 !important; color:#fff !important; }
+html[data-theme="black"] .game-secondary-action:hover { background:#303030 !important; color:#fff !important; }
 
 /* Contrast safeguards: custom utility colors must stay legible after a theme swap. */
 html[data-theme="arcade"] main:not(.home-page) [class*="text-[#"] { color:#f8f7ff !important; }
