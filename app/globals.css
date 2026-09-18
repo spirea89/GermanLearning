@@ -285,6 +285,20 @@ html[data-theme="classic"] .battle-visibility-option.is-selected { border-color:
 html[data-theme="black"] .battle-visibility-option { border-color:#525252; background:#171717 !important; color:#d4d4d4 !important; }
 html[data-theme="black"] .battle-visibility-option.is-selected { border-color:#f4f4f5; background:#f4f4f5 !important; color:#050505 !important; }
 
+/* Pale semantic surfaces always use dark ink, even after theme-wide text recoloring. */
+html[data-theme="arcade"] main:not(.home-page) :is(
+  [class~="bg-[#e3e8e2]"],[class~="bg-[#e4f2e8]"],[class~="bg-[#e7eefb]"],
+  [class~="bg-[#e8f3eb]"],[class~="bg-[#edf5ef]"],[class~="bg-[#eef8f1]"],
+  [class~="bg-[#fff3f0]"],[class~="bg-[#fffaf0]"]
+) { color:#171126 !important; }
+html[data-theme="black"] main :is(
+  [class~="bg-[#e3e8e2]"],[class~="bg-[#e4f2e8]"],[class~="bg-[#e7eefb]"],
+  [class~="bg-[#e8f3eb]"],[class~="bg-[#edf5ef]"],[class~="bg-[#eef8f1]"],
+  [class~="bg-[#fff3f0]"],[class~="bg-[#fffaf0]"]
+) { color:#050505 !important; }
+html[data-theme="arcade"] main:not(.home-page) :is([class~="bg-[#eef8f1]"],[class~="bg-[#fff3f0]"],[class~="bg-[#fffaf0]"]) *,
+html[data-theme="black"] main :is([class~="bg-[#eef8f1]"],[class~="bg-[#fff3f0]"],[class~="bg-[#fffaf0]"]) * { color:inherit !important; }
+
 @media (max-width:640px){.theme-switcher{right:.6rem;bottom:.6rem}.theme-switcher button span{display:none}.theme-switcher button{padding:.55rem}}
 
 .mobile-nav { display:none; }
