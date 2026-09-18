@@ -274,6 +274,17 @@ html[data-theme="black"] main :is(a,button)[class~="bg-[#d9ff59]"],
 html[data-theme="black"] main :is(a,button)[class~="bg-[#62e6ff]"],
 html[data-theme="black"] main :is(a,button)[class~="bg-[#ff6f9d]"] { background:#f4f4f5 !important; color:#050505 !important; }
 
+/* Battle visibility is a semantic control: selected labels must contrast with its surface. */
+.battle-visibility-option { background:#fff; color:#718077; }
+.battle-visibility-option.is-selected { border-color:#6b55ad; background:#f0edfb; color:#171126; }
+.battle-visibility-option.is-selected * { color:inherit !important; }
+html[data-theme="arcade"] .battle-visibility-option { border-color:#4b4070; background:#1b1538 !important; color:#c8c1df !important; }
+html[data-theme="arcade"] .battle-visibility-option.is-selected { border-color:#fff; background:#fff !important; color:#171126 !important; }
+html[data-theme="classic"] .battle-visibility-option { border-color:#cfc8ba; background:#fbfaf7 !important; color:#40545a !important; }
+html[data-theme="classic"] .battle-visibility-option.is-selected { border-color:#234955; background:#234955 !important; color:#fff !important; }
+html[data-theme="black"] .battle-visibility-option { border-color:#525252; background:#171717 !important; color:#d4d4d4 !important; }
+html[data-theme="black"] .battle-visibility-option.is-selected { border-color:#f4f4f5; background:#f4f4f5 !important; color:#050505 !important; }
+
 @media (max-width:640px){.theme-switcher{right:.6rem;bottom:.6rem}.theme-switcher button span{display:none}.theme-switcher button{padding:.55rem}}
 
 .mobile-nav { display:none; }
