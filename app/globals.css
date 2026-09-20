@@ -336,6 +336,17 @@ html[data-theme="classic"] .battle-live-pill > span { background:#d6b16b !import
 html[data-theme="classic"] .battle-lobby-panel [class*="bg-white/"] { border-color:rgb(221 190 132 / .25) !important; background:rgb(255 248 235 / .08) !important; color:#fff8eb !important; box-shadow:inset 0 1px rgb(255 255 255 / .05); }
 html[data-theme="classic"] .battle-lobby-panel [class~="bg-[#6d4aff]"] { background:#8a5b35 !important; color:#fff8eb !important; }
 
+/* Scheduled battle calendar events and final podium placement. */
+.battle-event { z-index:2; box-shadow:0 3px 10px rgb(31 37 34 / .12); }
+.battle-legend { display:flex; min-height:2.25rem; align-items:center; justify-content:center; border:1px solid; border-radius:.65rem; padding:.45rem .55rem; font-weight:700; }
+.battle-event--gold { border-color:#c08b18 !important; background:linear-gradient(135deg,#fff4b8,#e7bd4d) !important; color:#4f3905 !important; }
+.battle-event--silver { border-color:#9ba4ae !important; background:linear-gradient(135deg,#f7f9fb,#c9d0d8) !important; color:#303942 !important; }
+.battle-event--bronze { border-color:#a8663c !important; background:linear-gradient(135deg,#f4cfb3,#b9784e) !important; color:#4c2715 !important; }
+.battle-event--standard { border-color:#7c6db2 !important; background:#eeeafb !important; color:#423474 !important; }
+html[data-theme="arcade"] .battle-event--standard { border-color:#7563bd !important; background:#29204f !important; color:#fff !important; }
+html[data-theme="classic"] .battle-event--standard { border-color:#9c783f !important; background:#f1e4cf !important; color:#493324 !important; }
+html[data-theme="black"] :is(.battle-event,.battle-legend) { box-shadow:none; }
+
 @media (max-width:640px){.theme-switcher{right:.6rem;bottom:.6rem}.theme-switcher button span{display:none}.theme-switcher button{padding:.55rem}}
 
 .mobile-nav { display:none; }
