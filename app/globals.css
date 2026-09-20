@@ -288,6 +288,15 @@ html[data-theme="classic"] .battle-visibility-option { border-color:#cfc8ba; bac
 html[data-theme="classic"] .battle-visibility-option.is-selected { border-color:#234955; background:#234955 !important; color:#fff !important; }
 html[data-theme="black"] .battle-visibility-option { border-color:#525252; background:#171717 !important; color:#d4d4d4 !important; }
 html[data-theme="black"] .battle-visibility-option.is-selected { border-color:#f4f4f5; background:#f4f4f5 !important; color:#050505 !important; }
+.battle-game-option { border-color:#d8ded9; background:#fff; color:#59665e; }
+.battle-game-option.is-selected { border-color:#6b55ad; background:#f0edfb; color:#171126; }
+.battle-game-option.is-selected * { color:inherit !important; }
+html[data-theme="arcade"] .battle-game-option { border-color:#4b4070; background:#1b1538 !important; color:#c8c1df !important; }
+html[data-theme="arcade"] .battle-game-option.is-selected { border-color:#d9ff59; background:#29204f !important; color:#fff !important; }
+html[data-theme="classic"] .battle-game-option { border-color:#c7b184; background:#fffaf0 !important; color:#5b4b3f !important; }
+html[data-theme="classic"] .battle-game-option.is-selected { border-color:#9c783f; background:#263f34 !important; color:#fffaf0 !important; }
+html[data-theme="black"] .battle-game-option { border-color:#525252; background:#171717 !important; color:#d4d4d4 !important; }
+html[data-theme="black"] .battle-game-option.is-selected { border-color:#f4f4f5; background:#f4f4f5 !important; color:#050505 !important; }
 
 /* Pale semantic surfaces always use dark ink, even after theme-wide text recoloring. */
 html[data-theme="arcade"] main:not(.home-page) :is(
