@@ -25,7 +25,7 @@ import { supabase } from '@/lib/supabase';
 import { GERMANY_STATES } from '@/lib/germany-state-map';
 import { VIENNA_DISTRICTS } from '@/lib/vienna-district-map';
 
-const APP_VERSION = '0.27.0',
+const APP_VERSION = '0.28.0',
   STORAGE = 'lernzeit-active-contest';
 type MapType = 'germany' | 'vienna';
 type StartMode = 'now' | 'later';
@@ -212,9 +212,26 @@ export default function ContestPage() {
       .eq('active', true)
       .order('sort_order')
       .then(({ data }) => {
-        const available = ((data ?? []) as CatalogGame[]).filter((game) =>
-          game.levels.includes(level),
-        );
+        const available = ((data ?? []) as CatalogGame[])
+          .filter((game) => game.levels.includes(level))
+          .flatMap((game) =>
+            game.game_key === 'verb_past'
+              ? [
+                  {
+                    ...game,
+                    game_key: 'verb_past_forms',
+                    title: 'Vergangenheitsformen · Verb forms',
+                    category: 'Grammar · individual verbs',
+                  },
+                  {
+                    ...game,
+                    game_key: 'verb_past_sentences',
+                    title: 'Vergangenheitsformen · Complete sentences',
+                    category: 'Grammar · sentence transformation',
+                  },
+                ]
+              : [game],
+          );
         setCatalogGames(available);
         setSelectedGameKeys((current) => {
           const kept = current.filter((key) =>
