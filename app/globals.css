@@ -356,6 +356,16 @@ html[data-theme="arcade"] .battle-event--standard { border-color:#7563bd !import
 html[data-theme="classic"] .battle-event--standard { border-color:#9c783f !important; background:#f1e4cf !important; color:#493324 !important; }
 html[data-theme="black"] :is(.battle-event,.battle-legend) { box-shadow:none; }
 
+/* A compact geographic tile map of Germany's 16 federal states. */
+.germany-map { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); grid-template-rows:repeat(7,2.35rem); gap:.28rem; }
+.germany-region { display:flex; min-width:0; flex-direction:column; align-items:center; justify-content:center; border:1px solid #d9d5e7; border-radius:.55rem; background:#f3f1f8; padding:.2rem; color:#6e6879; text-align:center; font-size:.47rem; font-weight:700; line-height:1.05; transition:transform .2s,background .2s; }
+.germany-region strong { display:block; max-width:100%; overflow:hidden; color:#4d318f; font-size:.46rem; text-overflow:ellipsis; white-space:nowrap; }
+.germany-region.is-conquered { border-color:#e0aa34; background:linear-gradient(145deg,#fff3a7,#f2bd43); color:#49320b; box-shadow:0 3px 8px rgb(164 112 12 / .18); transform:scale(1.03); }
+.germany-region:nth-child(1){grid-column:3;grid-row:1}.germany-region:nth-child(2){grid-column:3;grid-row:2}.germany-region:nth-child(3){grid-column:4/6;grid-row:1/3}.germany-region:nth-child(4){grid-column:1;grid-row:3}.germany-region:nth-child(5){grid-column:2/4;grid-row:3}.germany-region:nth-child(6){grid-column:4/6;grid-row:3/5}.germany-region:nth-child(7){grid-column:5;grid-row:4}.germany-region:nth-child(8){grid-column:3/5;grid-row:4}.germany-region:nth-child(9){grid-column:1/3;grid-row:4/6}.germany-region:nth-child(10){grid-column:2/4;grid-row:6}.germany-region:nth-child(11){grid-column:4;grid-row:5}.germany-region:nth-child(12){grid-column:5;grid-row:5/7}.germany-region:nth-child(13){grid-column:1/3;grid-row:6}.germany-region:nth-child(14){grid-column:1;grid-row:7}.germany-region:nth-child(15){grid-column:2/4;grid-row:7}.germany-region:nth-child(16){grid-column:4/6;grid-row:7}
+html[data-theme="arcade"] .germany-region { border-color:#4b4070; background:#211943; color:#d5cfea; }
+html[data-theme="black"] .germany-region { border-color:#4a4a4a; background:#171717; color:#eee; }
+html[data-theme="classic"] .germany-region { border-color:#c7b184; background:#fffaf0; color:#5b4b3f; }
+
 @media (max-width:640px){.theme-switcher{right:.6rem;bottom:.6rem}.theme-switcher button span{display:none}.theme-switcher button{padding:.55rem}}
 
 .mobile-nav { display:none; }
