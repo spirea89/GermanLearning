@@ -23,9 +23,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 
-const APP_VERSION = '0.22.0',
+const APP_VERSION = '0.22.1',
   STORAGE = 'lernzeit-active-contest';
 type MapType = 'germany' | 'vienna';
+type StartMode = 'now' | 'later';
 type Contest = {
   id: string;
   join_code: string;
@@ -120,6 +121,7 @@ export default function ContestPage() {
     [code, setCode] = useState(''),
     [level, setLevel] = useState('B1'),
     [mapType, setMapType] = useState<MapType>('germany'),
+    [startMode, setStartMode] = useState<StartMode>('now'),
     [responseTime, setResponseTime] = useState(60),
     [battleDate, setBattleDate] = useState(() => dateInput(1)),
     [battleTime, setBattleTime] = useState('18:00'),
@@ -248,9 +250,10 @@ export default function ContestPage() {
     setBusy(true);
     setMessage('');
     try {
-      const scheduledFor = new Date(
-        `${battleDate}T${battleTime}:00`,
-      ).toISOString();
+      const scheduledFor =
+        startMode === 'now'
+          ? new Date().toISOString()
+          : new Date(`${battleDate}T${battleTime}:00`).toISOString();
       const rpc =
         visibility === 'open' ? 'create_open_contest' : 'create_contest';
       const { data, error } = await supabase.rpc(rpc, {
@@ -507,23 +510,47 @@ export default function ContestPage() {
                   </select>
                 </Field>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Battle day">
-                  <Input
-                    type="date"
-                    min={dateInput()}
-                    value={battleDate}
-                    onChange={(e) => setBattleDate(e.target.value)}
-                  />
-                </Field>
-                <Field label="Start time">
-                  <Input
-                    type="time"
-                    value={battleTime}
-                    onChange={(e) => setBattleTime(e.target.value)}
-                  />
-                </Field>
-              </div>
+              <Field label="When should the battle start?">
+                <div className="grid grid-cols-2 gap-2">
+                  {(['now', 'later'] as const).map((value) => (
+                    <button
+                      type="button"
+                      key={value}
+                      aria-pressed={startMode === value}
+                      onClick={() => setStartMode(value)}
+                      className={`battle-visibility-option rounded-xl border p-3 text-left text-sm ${startMode === value ? 'is-selected' : ''}`}
+                    >
+                      <strong className="block">
+                        {value === 'now' ? 'Start now' : 'Start later'}
+                      </strong>
+                      <span className="text-xs">
+                        {value === 'now'
+                          ? 'Start button available immediately'
+                          : 'Schedule a day and time'}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </Field>
+              {startMode === 'later' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Battle day">
+                    <Input
+                      type="date"
+                      min={dateInput()}
+                      value={battleDate}
+                      onChange={(e) => setBattleDate(e.target.value)}
+                    />
+                  </Field>
+                  <Field label="Start time">
+                    <Input
+                      type="time"
+                      value={battleTime}
+                      onChange={(e) => setBattleTime(e.target.value)}
+                    />
+                  </Field>
+                </div>
+              )}
               <Field label="Time per question">
                 <select
                   className="h-10 w-full rounded-md border bg-white px-3"
@@ -599,8 +626,7 @@ export default function ContestPage() {
                 disabled={
                   busy ||
                   !name.trim() ||
-                  !battleDate ||
-                  !battleTime ||
+                  (startMode === 'later' && (!battleDate || !battleTime)) ||
                   !selectedGameKeys.length
                 }
                 onClick={() => void create()}
