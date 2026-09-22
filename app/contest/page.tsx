@@ -22,8 +22,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
+import { VIENNA_DISTRICTS } from '@/lib/vienna-district-map';
 
-const APP_VERSION = '0.22.1',
+const APP_VERSION = '0.23.0',
   STORAGE = 'lernzeit-active-contest';
 type MapType = 'germany' | 'vienna';
 type StartMode = 'now' | 'later';
@@ -699,7 +700,9 @@ export default function ContestPage() {
                           {scheduledLabel(battle.scheduled_for)}
                         </span>
                         <span>
-                          · {battle.map_type === 'vienna' ? 'Vienna' : 'Germany'} map · {battle.question_count} questions ·{' '}
+                          ·{' '}
+                          {battle.map_type === 'vienna' ? 'Vienna' : 'Germany'}{' '}
+                          map · {battle.question_count} questions ·{' '}
                           {battle.response_time_seconds}s each ·{' '}
                           {battle.player_count}/10 players
                         </span>
@@ -863,8 +866,10 @@ function Lobby({
   return (
     <div className="mx-auto mt-8 max-w-3xl text-center">
       <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#6b55ad]">
-        Waiting room · {contest.level} · {contest.map_type === 'vienna' ? 'Vienna' : 'Germany'} map · {contest.question_count} questions ·{' '}
-        {contest.response_time_seconds}s each
+        Waiting room · {contest.level} ·{' '}
+        {contest.map_type === 'vienna' ? 'Vienna' : 'Germany'} map ·{' '}
+        {contest.question_count} questions · {contest.response_time_seconds}s
+        each
       </p>
       <h1 className="mt-3 text-3xl font-semibold">Invite your opponents</h1>
       <p className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full bg-[#ece9fb] px-4 py-2 text-sm font-semibold text-[#5b45a1]">
@@ -992,7 +997,10 @@ function Battle({
               </h1>
               <p className="mt-2 text-[#718077]">
                 You conquered {me?.regions_won ?? 0} of{' '}
-                {contest.map_type === 'vienna' ? "Vienna's 23 districts" : "Germany's 16 states"}.
+                {contest.map_type === 'vienna'
+                  ? "Vienna's 23 districts"
+                  : "Germany's 16 states"}
+                .
               </p>
             </div>
           ) : (
@@ -1009,7 +1017,9 @@ function Battle({
                         {remaining}s
                       </span>
                     )}
-                    <span>{shown.position}/{contest.question_count}</span>
+                    <span>
+                      {shown.position}/{contest.question_count}
+                    </span>
                   </span>
                 </div>
                 {!feedback && (
@@ -1133,7 +1143,14 @@ function Battle({
     </>
   );
 }
-function TerritoryMap({ mapType, awards }: { mapType: MapType; awards: RegionAward[] }) {
+function TerritoryMap({
+  mapType,
+  awards,
+}: {
+  mapType: MapType;
+  awards: RegionAward[];
+}) {
+  if (mapType === 'vienna') return <ViennaMap awards={awards} />;
   const germany = [
     'Schleswig-Holstein',
     'Hamburg',
@@ -1151,23 +1168,18 @@ function TerritoryMap({ mapType, awards }: { mapType: MapType; awards: RegionAwa
     'Saarland',
     'Baden-Württemberg',
     'Bavaria',
-  ], vienna = [
-    '1. Innere Stadt','2. Leopoldstadt','3. Landstraße','4. Wieden','5. Margareten','6. Mariahilf','7. Neubau','8. Josefstadt','9. Alsergrund','10. Favoriten','11. Simmering','12. Meidling','13. Hietzing','14. Penzing','15. Rudolfsheim-Fünfhaus','16. Ottakring','17. Hernals','18. Währing','19. Döbling','20. Brigittenau','21. Floridsdorf','22. Donaustadt','23. Liesing',
-  ], regions=mapType==='vienna'?vienna:germany;
+  ];
   return (
     <aside className="rounded-3xl border bg-white p-5">
       <h2 className="flex items-center gap-2 font-semibold">
         <Swords size={18} className="text-[#6b55ad]" />
-        {mapType==='vienna'?'Vienna conquered':'Germany conquered'}
+        Germany conquered
       </h2>
       <p className="mt-1 text-xs text-[#718077]">
         One unique region is available in every round.
       </p>
-      <div
-        className={`${mapType==='vienna'?'vienna-map':'germany-map'} mt-4`}
-        aria-label={mapType==='vienna'?"Map of Vienna's 23 districts":"Map of Germany's 16 states"}
-      >
-        {regions.map((region) => {
+      <div className="germany-map mt-4" aria-label="Map of Germany's 16 states">
+        {germany.map((region) => {
           const award = awards.find((item) => item.region === region);
           return (
             <div
@@ -1186,6 +1198,78 @@ function TerritoryMap({ mapType, awards }: { mapType: MapType; awards: RegionAwa
           );
         })}
       </div>
+    </aside>
+  );
+}
+const PLAYER_COLORS = [
+  '#f4b942',
+  '#ef6f6c',
+  '#6c8eef',
+  '#65c18c',
+  '#b77de0',
+  '#ef8f45',
+  '#50b9c7',
+  '#d66a9f',
+  '#8cab4a',
+  '#8172c6',
+];
+function playerColor(value: string | null) {
+  let hash = 0;
+  for (const char of value ?? '') hash = (hash * 31 + char.charCodeAt(0)) | 0;
+  return PLAYER_COLORS[Math.abs(hash) % PLAYER_COLORS.length];
+}
+function ViennaMap({ awards }: { awards: RegionAward[] }) {
+  return (
+    <aside className="rounded-3xl border bg-white p-5">
+      <h2 className="flex items-center gap-2 font-semibold">
+        <Swords size={18} className="text-[#6b55ad]" />
+        Vienna conquered
+      </h2>
+      <p className="mt-1 text-xs text-[#718077]">
+        The fastest correct answer claims a real Vienna district.
+      </p>
+      <svg
+        className="vienna-district-map mt-4"
+        viewBox="0 0 1000 760"
+        role="img"
+        aria-label="Map of Vienna's 23 districts"
+      >
+        {VIENNA_DISTRICTS.map((district) => {
+          const region = `${district.id}. ${district.name}`,
+            award = awards.find((item) => item.region === region),
+            winner = award?.winner_name ?? null;
+          return (
+            <g key={district.id} className={award ? 'is-conquered' : ''}>
+              <path
+                d={district.path}
+                style={
+                  award
+                    ? { fill: playerColor(award.winner_user_id) }
+                    : undefined
+                }
+              >
+                <title>{award ? `${region} · ${winner}` : region}</title>
+              </path>
+              <text
+                x={district.x}
+                y={district.y - (winner ? 6 : 0)}
+                className="district-number"
+              >
+                {district.id}
+              </text>
+              {winner && (
+                <text
+                  x={district.x}
+                  y={district.y + 16}
+                  className="district-winner"
+                >
+                  {winner.length > 10 ? `${winner.slice(0, 9)}…` : winner}
+                </text>
+              )}
+            </g>
+          );
+        })}
+      </svg>
     </aside>
   );
 }

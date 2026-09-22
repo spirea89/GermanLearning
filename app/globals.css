@@ -367,6 +367,20 @@ html[data-theme="black"] :is(.battle-event,.battle-legend) { box-shadow:none; }
 html[data-theme="arcade"] .territory-region { border-color:#4b4070; background:#211943; color:#d5cfea; }
 html[data-theme="black"] .territory-region { border-color:#4a4a4a; background:#171717; color:#eee; }
 html[data-theme="classic"] .territory-region { border-color:#c7b184; background:#fffaf0; color:#5b4b3f; }
+.vienna-district-map { display:block; width:100%; height:auto; overflow:visible; filter:drop-shadow(0 8px 12px rgb(31 37 34 / .12)); }
+.vienna-district-map path { fill:#eceaf2; stroke:#fff; stroke-width:3.2; vector-effect:non-scaling-stroke; transition:fill .25s ease,filter .25s ease; }
+.vienna-district-map .is-conquered path { filter:brightness(1.02) saturate(1.08); }
+.vienna-district-map text { pointer-events:none; text-anchor:middle; dominant-baseline:middle; paint-order:stroke; stroke:#fff; stroke-width:5px; stroke-linejoin:round; }
+.vienna-district-map .district-number { fill:#443d52; font-size:22px; font-weight:900; }
+.vienna-district-map .district-winner { fill:#171126; font-size:19px; font-weight:900; }
+html[data-theme="arcade"] .vienna-district-map path { fill:#29204f; stroke:#120d29; }
+html[data-theme="arcade"] .vienna-district-map text { stroke:#120d29; }
+html[data-theme="arcade"] .vienna-district-map :is(.district-number,.district-winner) { fill:#fff; }
+html[data-theme="black"] .vienna-district-map path { fill:#242424; stroke:#050505; }
+html[data-theme="black"] .vienna-district-map text { stroke:#050505; }
+html[data-theme="black"] .vienna-district-map :is(.district-number,.district-winner) { fill:#fff; }
+html[data-theme="classic"] .vienna-district-map path { fill:#eadfc9; stroke:#fffaf0; }
+html[data-theme="classic"] .vienna-district-map text { stroke:#fffaf0; }
 
 @media (max-width:640px){.theme-switcher{right:.6rem;bottom:.6rem}.theme-switcher button span{display:none}.theme-switcher button{padding:.55rem}}
 
