@@ -25,7 +25,7 @@ import { supabase } from '@/lib/supabase';
 import { GERMANY_STATES } from '@/lib/germany-state-map';
 import { VIENNA_DISTRICTS } from '@/lib/vienna-district-map';
 
-const APP_VERSION = '0.26.0',
+const APP_VERSION = '0.27.0',
   STORAGE = 'lernzeit-active-contest';
 type MapType = 'germany' | 'vienna';
 type StartMode = 'now' | 'later';
@@ -257,7 +257,7 @@ export default function ContestPage() {
           ? new Date().toISOString()
           : new Date(`${battleDate}T${battleTime}:00`).toISOString();
       const rpc =
-        visibility === 'open' ? 'create_open_contest' : 'create_contest';
+        visibility === 'open' ? 'create_open_contest_v2' : 'create_contest_v2';
       const { data, error } = await supabase.rpc(rpc, {
         p_level: level,
         p_question_count: mapType === 'vienna' ? 23 : 16,
@@ -266,6 +266,7 @@ export default function ContestPage() {
         p_scheduled_for: scheduledFor,
         p_game_keys: selectedGameKeys,
         p_map_type: mapType,
+        p_start_now: startMode === 'now',
       });
       if (error) throw error;
       const id = (data as { id?: string } | null)?.id;

@@ -42,7 +42,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 
-const APP_VERSION = '0.26.0';
+const APP_VERSION = '0.27.0';
 const STORAGE_KEY = 'lernzeit-blockers-v1';
 type Blocker = {
   id: string;
