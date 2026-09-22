@@ -25,7 +25,7 @@ import { supabase } from '@/lib/supabase';
 import { GERMANY_STATES } from '@/lib/germany-state-map';
 import { VIENNA_DISTRICTS } from '@/lib/vienna-district-map';
 
-const APP_VERSION = '0.24.0',
+const APP_VERSION = '0.24.1',
   STORAGE = 'lernzeit-active-contest';
 type MapType = 'germany' | 'vienna';
 type StartMode = 'now' | 'later';
@@ -1034,7 +1034,9 @@ function Battle({
                       />
                     </div>
                     <p className="mt-8 text-3xl font-medium">
-                      {shown.question.prompt}
+                      {shown.question.game === 'prepositions'
+                        ? shown.question.prompt.replace('?', '………………')
+                        : shown.question.prompt}
                     </p>
                     <p className="mt-3 text-sm font-medium text-[#5b45a1]">
                       {shown.question.focus}

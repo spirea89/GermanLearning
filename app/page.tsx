@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 
-const APP_VERSION='0.24.0';
+const APP_VERSION='0.24.1';
 type OpenBattle={id:string;level:string;question_count:number;scheduled_for:string;organizer_name:string;player_count:number;created_at:string};
 function scheduledLabel(value:string){return new Intl.DateTimeFormat('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Vienna'}).format(new Date(value));}
 
