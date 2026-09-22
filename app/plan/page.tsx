@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 
-const APP_VERSION = '0.23.0';
+const APP_VERSION = '0.24.0';
 const STORAGE_KEY = 'lernzeit-blockers-v1';
 type Blocker = { id: string; name: string; date: string; start: string; end: string; kind: 'learning' | 'busy'; source?: string; battleRank?: number | null };
 const INITIAL_WEEK = startOfWeek(new Date(), { weekStartsOn: 1 });

@@ -22,9 +22,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
+import { GERMANY_STATES } from '@/lib/germany-state-map';
 import { VIENNA_DISTRICTS } from '@/lib/vienna-district-map';
 
-const APP_VERSION = '0.23.0',
+const APP_VERSION = '0.24.0',
   STORAGE = 'lernzeit-active-contest';
 type MapType = 'germany' | 'vienna';
 type StartMode = 'now' | 'later';
@@ -1150,55 +1151,10 @@ function TerritoryMap({
   mapType: MapType;
   awards: RegionAward[];
 }) {
-  if (mapType === 'vienna') return <ViennaMap awards={awards} />;
-  const germany = [
-    'Schleswig-Holstein',
-    'Hamburg',
-    'Mecklenburg-Vorpommern',
-    'Bremen',
-    'Lower Saxony',
-    'Brandenburg',
-    'Berlin',
-    'Saxony-Anhalt',
-    'North Rhine-Westphalia',
-    'Hesse',
-    'Thuringia',
-    'Saxony',
-    'Rhineland-Palatinate',
-    'Saarland',
-    'Baden-Württemberg',
-    'Bavaria',
-  ];
-  return (
-    <aside className="rounded-3xl border bg-white p-5">
-      <h2 className="flex items-center gap-2 font-semibold">
-        <Swords size={18} className="text-[#6b55ad]" />
-        Germany conquered
-      </h2>
-      <p className="mt-1 text-xs text-[#718077]">
-        One unique region is available in every round.
-      </p>
-      <div className="germany-map mt-4" aria-label="Map of Germany's 16 states">
-        {germany.map((region) => {
-          const award = awards.find((item) => item.region === region);
-          return (
-            <div
-              key={region}
-              title={award ? `${region} · ${award.winner_name}` : region}
-              className={`territory-region ${award ? 'is-conquered' : ''}`}
-            >
-              <span>
-                {region
-                  .replace('North Rhine-Westphalia', 'North Rhine-W.')
-                  .replace('Mecklenburg-Vorpommern', 'Mecklenburg-V.')
-                  .replace('Rhineland-Palatinate', 'Rhineland-P.')}
-              </span>
-              {award && <strong>{award.winner_name}</strong>}
-            </div>
-          );
-        })}
-      </div>
-    </aside>
+  return mapType === 'vienna' ? (
+    <ViennaMap awards={awards} />
+  ) : (
+    <GermanyMap awards={awards} />
   );
 }
 const PLAYER_COLORS = [
@@ -1217,6 +1173,80 @@ function playerColor(value: string | null) {
   let hash = 0;
   for (const char of value ?? '') hash = (hash * 31 + char.charCodeAt(0)) | 0;
   return PLAYER_COLORS[Math.abs(hash) % PLAYER_COLORS.length];
+}
+function GermanyMap({ awards }: { awards: RegionAward[] }) {
+  return (
+    <aside className="rounded-3xl border bg-white p-5">
+      <h2 className="flex items-center gap-2 font-semibold">
+        <Swords size={18} className="text-[#6b55ad]" />
+        Germany conquered
+      </h2>
+      <p className="mt-1 text-xs text-[#718077]">
+        The fastest correct answer claims a real federal state.
+      </p>
+      <svg
+        className="vienna-district-map germany-state-map mt-4"
+        viewBox="0 0 700 900"
+        role="img"
+        aria-label="Map of Germany's 16 federal states"
+      >
+        {GERMANY_STATES.map((state) => {
+          const award = awards.find((item) => item.region === state.name),
+            winner = award?.winner_name ?? null;
+          return (
+            <g key={state.code} className={award ? 'is-conquered' : ''}>
+              <path
+                d={state.path}
+                style={
+                  award
+                    ? { fill: playerColor(award.winner_user_id) }
+                    : undefined
+                }
+              >
+                <title>
+                  {award
+                    ? `${state.displayName} · ${winner}`
+                    : state.displayName}
+                </title>
+              </path>
+              <text
+                x={state.x}
+                y={state.y - (winner ? 7 : 0)}
+                className="district-number"
+              >
+                {state.code}
+              </text>
+              {winner && (
+                <text x={state.x} y={state.y + 17} className="district-winner">
+                  {winner.length > 10 ? `${winner.slice(0, 9)}…` : winner}
+                </text>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+      <p className="mt-2 text-[9px] text-[#87928a]">
+        Map boundaries:{' '}
+        <a
+          className="underline"
+          href="https://www.bkg.bund.de"
+          target="_blank"
+          rel="noreferrer"
+        >
+          © BKG 2025
+        </a>{' '}
+        ·{' '}
+        <a
+          className="underline"
+          href="https://www.govdata.de/dl-de/by-2-0"
+          target="_blank"
+          rel="noreferrer"
+        >
+          dl-de/by-2-0
+        </a>
+      </p>
+    </aside>
+  );
 }
 function ViennaMap({ awards }: { awards: RegionAward[] }) {
   return (
