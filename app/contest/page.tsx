@@ -25,7 +25,7 @@ import { supabase } from '@/lib/supabase';
 import { GERMANY_STATES } from '@/lib/germany-state-map';
 import { VIENNA_DISTRICTS } from '@/lib/vienna-district-map';
 
-const APP_VERSION = '0.24.1',
+const APP_VERSION = '0.25.0',
   STORAGE = 'lernzeit-active-contest';
 type MapType = 'germany' | 'vienna';
 type StartMode = 'now' | 'later';

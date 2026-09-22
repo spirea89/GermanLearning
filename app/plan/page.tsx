@@ -11,9 +11,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 
-const APP_VERSION = '0.24.1';
+const APP_VERSION = '0.25.0';
 const STORAGE_KEY = 'lernzeit-blockers-v1';
-type Blocker = { id: string; name: string; date: string; start: string; end: string; kind: 'learning' | 'busy'; source?: string; battleRank?: number | null };
+type Blocker = { id: string; name: string; date: string; start: string; end: string; kind: 'learning' | 'busy'; source?: string; battleRank?: number | null; battleScore?: number | null };
 const INITIAL_WEEK = startOfWeek(new Date(), { weekStartsOn: 1 });
 const INITIAL_BLOCKERS: Blocker[] = [
   { id: 'sample-1', name: 'Morning focus', date: format(addDays(INITIAL_WEEK, 0), 'yyyy-MM-dd'), start: '08:00', end: '09:00', kind: 'learning' },
@@ -25,9 +25,19 @@ const INITIAL_BLOCKERS: Blocker[] = [
 function minutes(value: string) { const [hour, minute] = value.split(':').map(Number); return hour * 60 + minute; }
 function formatTime(value: string) { const [hour, minute] = value.split(':').map(Number); return `${hour % 12 || 12}${minute ? `:${String(minute).padStart(2, '0')}` : ''} ${hour >= 12 ? 'PM' : 'AM'}`; }
 function isoDate(value: Date) { return format(value, 'yyyy-MM-dd'); }
-function rowToBlocker(row: { id: string; title: string; starts_at: string; ends_at: string; kind: 'learning' | 'busy'; source?: string; battle_rank?: number | null }): Blocker {
+function rowToBlocker(row: { id: string; title: string; starts_at: string; ends_at: string; kind: 'learning' | 'busy'; source?: string; battle_rank?: number | null; battle_score?: number | null }): Blocker {
   const starts = new Date(row.starts_at); const ends = new Date(row.ends_at);
-  return { id: row.id, name: row.title, date: starts.toLocaleDateString('en-CA', { timeZone: 'Europe/Vienna' }), start: starts.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Vienna' }), end: ends.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Vienna' }), kind: row.kind, source: row.source, battleRank: row.battle_rank };
+  return { id: row.id, name: row.title, date: starts.toLocaleDateString('en-CA', { timeZone: 'Europe/Vienna' }), start: starts.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Vienna' }), end: ends.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Vienna' }), kind: row.kind, source: row.source, battleRank: row.battle_rank, battleScore: row.battle_score };
+}
+function collapseCompletedBattlesByHour(items: Blocker[]) {
+  const best = new Map<string, Blocker>();
+  for (const item of items) {
+    if (item.source !== 'battle' || item.battleRank == null) continue;
+    const key = `${item.date}-${item.start.slice(0, 2)}`;
+    const current = best.get(key);
+    if (!current || (item.battleScore ?? -1) > (current.battleScore ?? -1) || ((item.battleScore ?? -1) === (current.battleScore ?? -1) && (item.battleRank ?? 99) < (current.battleRank ?? 99))) best.set(key, item);
+  }
+  return items.filter((item) => item.source !== 'battle' || item.battleRank == null || best.get(`${item.date}-${item.start.slice(0, 2)}`)?.id === item.id);
 }
 
 export default function Home() {
@@ -60,7 +70,7 @@ export default function Home() {
   useEffect(() => {
     if (!user) return;
     void supabase.from('learning_blocks').select('*').gte('starts_at', startOfDay(weekStart).toISOString()).lt('starts_at', startOfDay(weekEnd).toISOString()).order('starts_at').then(({ data }) => {
-      setBlockers((data ?? []).map(rowToBlocker));
+      setBlockers(collapseCompletedBattlesByHour((data ?? []).map(rowToBlocker)));
     });
   }, [user, weekStart]);
   useEffect(() => {
@@ -143,7 +153,7 @@ export default function Home() {
         </section>
         <aside className="space-y-5">
           <section className="rounded-2xl bg-[#183e2b] p-5 text-white shadow-[0_12px_30px_rgba(24,62,43,0.16)]"><div className="mb-5 flex items-start justify-between"><div className="grid size-10 place-items-center rounded-xl bg-white/10"><Clock3 size={20} /></div><MoreHorizontal className="text-white/60" /></div><p className="text-sm text-white/70">Planned this week</p><p className="mt-1 text-4xl font-semibold tracking-[-0.04em]">{learningHours.toFixed(1)} <span className="text-xl font-normal text-white/65">hours</span></p><div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-[#e8bd78]" style={{ width: `${Math.min((learningHours / 7) * 100, 100)}%` }} /></div><p className="mt-2 text-xs text-white/60">Weekly goal: 7 hours</p></section>
-          <section className="rounded-2xl border border-[#dce3d9] bg-white p-5"><div className="flex items-start gap-3"><div className="grid size-9 place-items-center rounded-lg bg-[#eef3fb] text-[#3674bb]"><Swords size={18} /></div><div><h2 className="font-semibold">Battle calendar</h2><p className="mt-0.5 text-xs leading-relaxed text-[#718077]">Battles are added automatically when you create or join them.</p></div></div><div className="mt-5 grid grid-cols-2 gap-2 text-xs"><span className="battle-legend battle-event--gold">1st · Gold</span><span className="battle-legend battle-event--silver">2nd · Silver</span><span className="battle-legend battle-event--bronze">3rd · Bronze</span><span className="battle-legend battle-event--standard">4th+ · Standard</span></div><p className="mt-4 text-xs leading-relaxed text-[#718077]">After the battle finishes, its calendar event updates with your final rank.</p></section>
+          <section className="rounded-2xl border border-[#dce3d9] bg-white p-5"><div className="flex items-start gap-3"><div className="grid size-9 place-items-center rounded-lg bg-[#eef3fb] text-[#3674bb]"><Swords size={18} /></div><div><h2 className="font-semibold">Battle calendar</h2><p className="mt-0.5 text-xs leading-relaxed text-[#718077]">Battles are added automatically when you create or join them.</p></div></div><div className="mt-5 grid grid-cols-2 gap-2 text-xs"><span className="battle-legend battle-event--gold">1st · Gold</span><span className="battle-legend battle-event--silver">2nd · Silver</span><span className="battle-legend battle-event--bronze">3rd · Bronze</span><span className="battle-legend battle-event--standard">4th+ · Standard</span></div><p className="mt-4 text-xs leading-relaxed text-[#718077]">After battles finish, only your best region score in each hour is shown.</p></section>
           <section className="rounded-2xl border border-[#eadfc7] bg-[#fffaf0] p-4"><p className="text-xs font-semibold text-[#7b5a20]">Planning tip</p><p className="mt-1 text-xs leading-relaxed text-[#806c49]">Short, repeatable sessions beat the occasional marathon. Try 30 minutes at the same time each day.</p></section>
         </aside>
       </div>

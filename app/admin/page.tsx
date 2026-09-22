@@ -13,7 +13,7 @@ import type { GameItem, PrepositionGameItem, VerbGameItem } from '@/lib/game-con
 import { VerbsPanel } from './verbs-panel';
 import { PrepositionsPanel } from './prepositions-panel';
 
-const APP_VERSION = '0.24.1';
+const APP_VERSION = '0.25.0';
 const EMPTY_FORM = { phrase_before: '', target_word: '', phrase_after: '', opposite_word: '', hint: '', active: true, sort_order: 10 };
 const LEVELS = ['A1','A2','B1','B2','C1','C2'];
 type GameKey='opposites'|'verb_past'|'prepositions';
