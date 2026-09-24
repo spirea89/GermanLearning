@@ -25,7 +25,7 @@ import { supabase } from '@/lib/supabase';
 import { GERMANY_STATES } from '@/lib/germany-state-map';
 import { VIENNA_DISTRICTS } from '@/lib/vienna-district-map';
 
-const APP_VERSION = '0.29.0',
+const APP_VERSION = '0.29.1',
   STORAGE = 'lernzeit-active-contest';
 type MapType = 'germany' | 'vienna';
 type StartMode = 'now' | 'later';
@@ -206,13 +206,49 @@ export default function ContestPage() {
     return () => clearInterval(timer);
   }, [user, contestId, browse]);
   useEffect(() => {
-    void supabase
-      .from('practice_games')
-      .select('game_key,title,category,levels')
-      .eq('active', true)
-      .order('sort_order')
-      .then(({ data }) => {
-        const available = ((data ?? []) as CatalogGame[])
+    let cancelled = false;
+    void Promise.all([
+      supabase
+        .from('practice_games')
+        .select('game_key,title,category,levels')
+        .eq('active', true)
+        .order('sort_order'),
+      supabase
+        .from('game_content')
+        .select('id')
+        .eq('level', level)
+        .eq('game_key', 'opposites')
+        .eq('active', true)
+        .limit(1),
+      supabase
+        .from('preposition_game_content')
+        .select('id')
+        .eq('level', level)
+        .eq('active', true)
+        .limit(1),
+      supabase
+        .from('verb_game_content')
+        .select('id,present_sentences,preterite_sentences,perfect_sentences')
+        .eq('level', level)
+        .eq('active', true),
+    ]).then(
+      ([gamesResult, oppositesResult, prepositionsResult, verbsResult]) => {
+        if (cancelled) return;
+        const verbs = verbsResult.data ?? [];
+        const hasCompleteSentences = verbs.some(
+          (verb) =>
+            verb.present_sentences?.length === 6 &&
+            verb.preterite_sentences?.length === 6 &&
+            verb.perfect_sentences?.length === 6,
+        );
+        const contentAvailable = new Set<string>();
+        if (oppositesResult.data?.length) contentAvailable.add('opposites');
+        if (prepositionsResult.data?.length)
+          contentAvailable.add('prepositions');
+        if (verbs.length) contentAvailable.add('verb_past_forms');
+        if (hasCompleteSentences) contentAvailable.add('verb_past_sentences');
+
+        const available = ((gamesResult.data ?? []) as CatalogGame[])
           .filter((game) => game.levels.includes(level))
           .flatMap((game) =>
             game.game_key === 'verb_past'
@@ -231,7 +267,8 @@ export default function ContestPage() {
                   },
                 ]
               : [game],
-          );
+          )
+          .filter((game) => contentAvailable.has(game.game_key));
         setCatalogGames(available);
         setSelectedGameKeys((current) => {
           const kept = current.filter((key) =>
@@ -239,7 +276,11 @@ export default function ContestPage() {
           );
           return kept.length ? kept : available.map((game) => game.game_key);
         });
-      });
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
   }, [level]);
   useEffect(() => {
     if (current)
@@ -616,8 +657,8 @@ export default function ContestPage() {
                     })
                   ) : (
                     <p className="rounded-xl border border-dashed p-3 text-xs text-[#718077]">
-                      No games are enabled for {level}. Configure game levels in
-                      Administration.
+                      No games with active {level} questions are available. Add
+                      content for this level in Administration.
                     </p>
                   )}
                 </div>
