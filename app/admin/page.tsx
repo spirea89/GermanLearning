@@ -38,7 +38,7 @@ import type {
 import { VerbsPanel } from './verbs-panel';
 import { PrepositionsPanel } from './prepositions-panel';
 
-const APP_VERSION = '0.29.1';
+const APP_VERSION = '0.30.0';
 const EMPTY_FORM = {
   phrase_before: '',
   target_word: '',
