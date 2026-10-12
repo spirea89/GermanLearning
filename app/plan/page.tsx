@@ -41,8 +41,14 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
+import {
+  accountUsername,
+  signInWithUsername,
+  signUpWithUsername,
+  usernameError,
+} from '@/lib/username-auth';
 
-const APP_VERSION = '0.30.0';
+const APP_VERSION = '0.31.0';
 const STORAGE_KEY = 'lernzeit-blockers-v1';
 type Blocker = {
   id: string;
@@ -199,7 +205,7 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [authMessage, setAuthMessage] = useState('');
   const [authBusy, setAuthBusy] = useState(false);
@@ -481,25 +487,26 @@ export default function Home() {
     setAddOpen(true);
   }
   async function submitAuth() {
+    const validation = usernameError(username, authMode === 'signin');
+    if (validation) {
+      setAuthMessage(validation);
+      return;
+    }
     setAuthBusy(true);
     setAuthMessage('');
     const result =
       authMode === 'signin'
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              emailRedirectTo: 'https://spirea89.github.io/GermanLearning/',
-            },
-          });
+        ? await signInWithUsername(username, password)
+        : await signUpWithUsername(username, password);
     setAuthBusy(false);
     if (result.error) {
       setAuthMessage(result.error.message);
       return;
     }
     if (authMode === 'signup' && !result.data.session) {
-      setAuthMessage('Check your email to confirm your account.');
+      setAuthMessage(
+        'Account creation is awaiting an authentication configuration update.',
+      );
       return;
     }
     setAuthOpen(false);
@@ -562,7 +569,9 @@ export default function Home() {
                 onClick={() => void supabase.auth.signOut()}
               >
                 <LogOut />
-                <span className="hidden truncate sm:inline">{user.email}</span>
+                <span className="hidden truncate sm:inline">
+                  {accountUsername(user)}
+                </span>
                 <span className="sm:hidden">Sign out</span>
               </Button>
             ) : (
@@ -841,18 +850,24 @@ export default function Home() {
                 : 'Create your Lernzeit account'}
             </DialogTitle>
             <DialogDescription>
-              Sign in to keep your learning plan safely synced across devices.
+              Use a username and password to sync your plan. No email address is
+              required.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <label className="block text-sm font-medium">
-              Email
+              Username
               <Input
                 className="mt-2 h-10"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                autoComplete="email"
+                type="text"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                autoComplete="username"
+                placeholder={
+                  authMode === 'signin'
+                    ? 'Username or existing email'
+                    : 'Username'
+                }
               />
             </label>
             <label className="block text-sm font-medium">
@@ -872,6 +887,12 @@ export default function Home() {
                 {authMessage}
               </p>
             )}
+            {authMode === 'signup' && (
+              <p className="text-xs text-[#718077]">
+                Remember your password. Username-only accounts cannot receive a
+                password-reset email.
+              </p>
+            )}
             <button
               className="text-xs font-medium text-[#1f6f4a] underline-offset-4 hover:underline"
               onClick={() => {
@@ -889,7 +910,7 @@ export default function Home() {
               Cancel
             </Button>
             <Button
-              disabled={authBusy || !email || password.length < 6}
+              disabled={authBusy || !username.trim() || password.length < 6}
               onClick={() => void submitAuth()}
               className="bg-[#1f6f4a] hover:bg-[#185c3d]"
             >

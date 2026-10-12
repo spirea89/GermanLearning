@@ -1,30 +1,443 @@
 'use client';
-export const dynamic='force-static';
+export const dynamic = 'force-static';
 import { useCallback, useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { ArrowRight, CalendarDays, Flame, Gamepad2, LogIn, LogOut, Play, Sparkles, Swords, Trophy, Users, Zap } from 'lucide-react';
+import {
+  ArrowRight,
+  CalendarDays,
+  Flame,
+  Gamepad2,
+  LogIn,
+  LogOut,
+  Play,
+  Sparkles,
+  Swords,
+  Trophy,
+  Users,
+  Zap,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
+import {
+  signInWithUsername,
+  signUpWithUsername,
+  usernameError,
+} from '@/lib/username-auth';
 
-const APP_VERSION='0.30.0';
-type OpenBattle={id:string;level:string;question_count:number;scheduled_for:string;organizer_name:string;player_count:number;created_at:string};
-function scheduledLabel(value:string){return new Intl.DateTimeFormat('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Vienna'}).format(new Date(value));}
-
-export default function Home(){
- const[user,setUser]=useState<User|null>(null),[battles,setBattles]=useState<OpenBattle[]>([]),[loading,setLoading]=useState(true),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[authMode,setAuthMode]=useState<'signin'|'signup'>('signup');
- const browse=useCallback(async()=>{const{data,error}=await supabase.rpc('browse_open_contests');if(!error)setBattles((data??[]) as OpenBattle[]);setLoading(false);},[]);
- useEffect(()=>{void supabase.auth.getUser().then(({data})=>{setUser(data.user);if(data.user)void browse();else setLoading(false);});const{data}=supabase.auth.onAuthStateChange((_e,session)=>{setUser(session?.user??null);if(session?.user)void browse();else setBattles([]);});return()=>data.subscription.unsubscribe();},[browse]);
- useEffect(()=>{if(!user)return;const timer=window.setInterval(()=>void browse(),3000);return()=>clearInterval(timer);},[user,browse]);
- async function submitAuth(){setBusy(true);setMessage('');const result=authMode==='signup'?await supabase.auth.signUp({email,password,options:{emailRedirectTo:'https://spirea89.github.io/GermanLearning/'}}):await supabase.auth.signInWithPassword({email,password});setBusy(false);if(result.error)setMessage(result.error.message);else if(authMode==='signup'&&!result.data.session)setMessage('Account created. Check your email to confirm your address, then sign in.');}
- return <main className="home-page min-h-screen overflow-hidden bg-[#100c24] text-white selection:bg-[#d9ff59] selection:text-[#171126]">
-  <header className="relative z-20 border-b border-white/10 bg-[#100c24]/85 px-5 py-4 backdrop-blur-xl"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4"><a href="./" className="flex items-center gap-3"><span className="grid size-10 rotate-[-6deg] place-items-center rounded-xl bg-[#d9ff59] text-[#171126] shadow-[4px_4px_0_#ff5a7a]"><Zap size={21} fill="currentColor"/></span><span className="text-xl font-black tracking-tight">Lernzeit<span className="text-[#d9ff59]">!</span></span></a><nav className="main-nav hidden items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-1 md:flex"><a href="./" className="main-nav-link main-nav-link--active rounded-xl px-4 py-2 text-sm font-bold">Battles</a><a href="./plan.html" className="main-nav-link rounded-xl px-4 py-2 text-sm font-semibold">Learning Plan</a><a href="./practice.html" className="main-nav-link rounded-xl px-4 py-2 text-sm font-semibold">Games</a></nav>{user?<Button variant="ghost" onClick={()=>void supabase.auth.signOut()} className="text-white hover:bg-white/10 hover:text-white"><LogOut/>Sign out</Button>:<a href="#signin" className="rounded-xl bg-[#d9ff59] px-4 py-2 text-sm font-black text-[#171126]">Sign up / Sign in</a>}</div></header>
-  <section className="relative px-5 pb-16 pt-14"><div className="pointer-events-none absolute left-[-8rem] top-10 size-80 rounded-full bg-[#6d4aff]/30 blur-3xl"/><div className="pointer-events-none absolute right-[-5rem] top-32 size-72 rounded-full bg-[#ff4f87]/25 blur-3xl"/><div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.05fr_.95fr] lg:items-center"><div><span className="inline-flex rotate-[-2deg] items-center gap-2 rounded-full border-2 border-[#d9ff59]/60 bg-[#d9ff59]/10 px-4 py-2 text-xs font-black uppercase tracking-[.18em] text-[#d9ff59]"><Flame size={15}/>Live German showdowns</span><h1 className="mt-6 max-w-3xl text-5xl font-black leading-[.95] tracking-[-.055em] sm:text-7xl">Learn German.<br/><span className="bg-gradient-to-r from-[#d9ff59] via-[#62e6ff] to-[#ff6f9d] bg-clip-text text-transparent">Beat your friends.</span></h1><p className="mt-6 max-w-xl text-lg leading-relaxed text-white/65">Jump into a live language battle, climb the leaderboard, and turn grammar practice into something worth bragging about.</p><div className="mt-8 flex flex-wrap gap-3"><a href="./contest.html" className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#d9ff59] px-6 font-black text-[#171126] shadow-[5px_5px_0_#ff5a7a] transition hover:-translate-y-1">Create a battle <Swords size={19}/></a><a href="./practice.html" className="inline-flex h-12 items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-6 font-bold backdrop-blur hover:bg-white/15">Train solo <Gamepad2 size={19}/></a></div><div className="mt-10 flex gap-7 text-sm text-white/55"><span><strong className="block text-2xl font-black text-white">10</strong>players max</span><span><strong className="block text-2xl font-black text-white">3</strong>game types</span><span><strong className="block text-2xl font-black text-white">∞</strong>rematches</span></div></div>
-   <div className="relative"><div className="battle-lobby-frame absolute -inset-3 rotate-3 rounded-[2.2rem] bg-gradient-to-br from-[#6d4aff] to-[#ff4f87] opacity-80"/><div className="battle-lobby-panel relative rounded-[2rem] border border-white/15 bg-[#1b1538]/95 p-5 shadow-2xl"><div className="flex items-center justify-between"><div><p className="battle-lobby-kicker text-xs font-black uppercase tracking-[.18em] text-[#62e6ff]">Open now</p><h2 className="mt-1 text-2xl font-black">Battle lobbies</h2></div><span className="battle-live-pill flex items-center gap-2 rounded-full bg-[#30d786]/15 px-3 py-1 text-xs font-bold text-[#5bf0a5]"><span className="size-2 animate-pulse rounded-full bg-[#5bf0a5]"/>Live</span></div><BattleList user={user} battles={battles} loading={loading}/></div></div></div></section>
-  {!user&&<section id="signin" className="border-y border-white/10 bg-white/[.04] px-5 py-12"><div className="mx-auto grid max-w-5xl items-center gap-8 md:grid-cols-2"><div><p className="text-xs font-black uppercase tracking-[.18em] text-[#ff83aa]">Ready player one?</p><h2 className="mt-2 text-3xl font-black">{authMode==='signup'?'Create your account and enter the arena.':'Welcome back to the arena.'}</h2><p className="mt-3 text-white/55">Your score, learning time, and battle identity stay connected to your Lernzeit account.</p></div><form onSubmit={e=>{e.preventDefault();void submitAuth();}} className="rounded-3xl border border-white/10 bg-[#1b1538] p-5"><div className="grid gap-3 sm:grid-cols-2"><Input type="email" aria-label="Email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} autoComplete="email" className="border-white/15 bg-white/10 text-white placeholder:text-white/35"/><Input type="password" aria-label="Password" placeholder="Password (6 characters minimum)" value={password} onChange={e=>setPassword(e.target.value)} autoComplete={authMode==='signup'?'new-password':'current-password'} className="border-white/15 bg-white/10 text-white placeholder:text-white/35"/></div><Button type="submit" disabled={busy||!email||password.length<6} className="mt-3 w-full bg-[#d9ff59] font-black text-[#171126] hover:bg-[#c8ef48]"><LogIn/>{busy?'Please wait…':authMode==='signup'?'Create account':'Sign in'}</Button><button type="button" onClick={()=>{setAuthMode(authMode==='signup'?'signin':'signup');setMessage('');}} className="mt-3 w-full py-2 text-sm font-semibold underline underline-offset-4">{authMode==='signup'?'Already have an account? Sign in':'New here? Create an account'}</button>{message&&<p role="status" className="mt-2 text-sm text-[#ff83aa]">{message}</p>}</form></div></section>}
-  <section className="px-5 py-14"><div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-2"><a href="./plan.html" className="group rounded-[2rem] border border-white/10 bg-gradient-to-br from-[#182c4f] to-[#19213f] p-7 transition hover:-translate-y-1"><span className="grid size-12 place-items-center rounded-2xl bg-[#62e6ff] text-[#10233b]"><CalendarDays/></span><p className="mt-8 text-xs font-black uppercase tracking-[.18em] text-[#62e6ff]">Plan it</p><h3 className="mt-2 text-3xl font-black">Own your week</h3><p className="mt-2 text-white/55">Build your learning plan around real life and calendar commitments.</p><span className="mt-6 flex items-center gap-2 font-bold text-[#62e6ff]">Open Learning Plan <ArrowRight className="transition group-hover:translate-x-1"/></span></a><a href="./practice.html" className="group rounded-[2rem] border border-white/10 bg-gradient-to-br from-[#46213d] to-[#291a3e] p-7 transition hover:-translate-y-1"><span className="grid size-12 place-items-center rounded-2xl bg-[#ff6f9d] text-[#351125]"><Trophy/></span><p className="mt-8 text-xs font-black uppercase tracking-[.18em] text-[#ff83aa]">Level up</p><h3 className="mt-2 text-3xl font-black">Train your weak spots</h3><p className="mt-2 text-white/55">Fast grammar and vocabulary games with instant feedback.</p><span className="mt-6 flex items-center gap-2 font-bold text-[#ff83aa]">Browse Games <ArrowRight className="transition group-hover:translate-x-1"/></span></a></div></section>
-  <footer className="border-t border-white/10 px-5 py-6 text-xs text-white/35"><div className="mx-auto flex max-w-7xl justify-between"><span>Lernzeit · German, but make it a game.</span><span>Version {APP_VERSION}</span></div></footer>
- </main>;
+const APP_VERSION = '0.31.0';
+type OpenBattle = {
+  id: string;
+  level: string;
+  question_count: number;
+  scheduled_for: string;
+  organizer_name: string;
+  player_count: number;
+  created_at: string;
+};
+function scheduledLabel(value: string) {
+  return new Intl.DateTimeFormat('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/Vienna',
+  }).format(new Date(value));
 }
 
-function BattleList({user,battles,loading}:{user:User|null;battles:OpenBattle[];loading:boolean}){if(!user)return <div className="mt-5 rounded-2xl border border-dashed border-white/20 bg-black/10 p-8 text-center"><Users className="mx-auto text-white/35"/><p className="mt-3 font-bold">Sign in to reveal scheduled battles</p><p className="mt-1 text-sm text-white/45">Open lobbies are visible to Lernzeit players.</p></div>;if(loading)return <div className="mt-5 animate-pulse rounded-2xl bg-white/5 p-8 text-center text-white/40">Scanning for battles…</div>;if(!battles.length)return <div className="mt-5 rounded-2xl border border-dashed border-white/20 p-8 text-center"><Sparkles className="mx-auto text-[#d9ff59]"/><p className="mt-3 font-bold">The arena is quiet… for now.</p><a href="./contest.html" className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#d9ff59]">Schedule the first battle <ArrowRight size={15}/></a></div>;return <div className="mt-5 space-y-3">{battles.slice(0,5).map((battle,index)=><a href="./contest.html" key={battle.id} className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[.06] p-3 transition hover:border-[#d9ff59]/50 hover:bg-white/10"><span className={`grid size-11 shrink-0 place-items-center rounded-xl font-black ${index===0?'bg-[#d9ff59] text-[#171126]':'bg-[#6d4aff] text-white'}`}>{battle.level}</span><span className="min-w-0 flex-1"><strong className="block truncate">{battle.organizer_name}&apos;s battle</strong><span className="block truncate text-xs text-white/45">{scheduledLabel(battle.scheduled_for)} · {battle.question_count} questions</span></span><span className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-bold"><Users size={13}/>{battle.player_count}/10</span><Play size={17} className="text-[#d9ff59] transition group-hover:translate-x-1"/></a>)}</div>;}
+export default function Home() {
+  const [user, setUser] = useState<User | null>(null),
+    [battles, setBattles] = useState<OpenBattle[]>([]),
+    [loading, setLoading] = useState(true),
+    [username, setUsername] = useState(''),
+    [password, setPassword] = useState(''),
+    [message, setMessage] = useState(''),
+    [busy, setBusy] = useState(false),
+    [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
+  const browse = useCallback(async () => {
+    const { data, error } = await supabase.rpc('browse_open_contests');
+    if (!error) setBattles((data ?? []) as OpenBattle[]);
+    setLoading(false);
+  }, []);
+  useEffect(() => {
+    void supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      if (data.user) void browse();
+      else setLoading(false);
+    });
+    const { data } = supabase.auth.onAuthStateChange((_e, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) void browse();
+      else setBattles([]);
+    });
+    return () => data.subscription.unsubscribe();
+  }, [browse]);
+  useEffect(() => {
+    if (!user) return;
+    const timer = window.setInterval(() => void browse(), 3000);
+    return () => clearInterval(timer);
+  }, [user, browse]);
+  async function submitAuth() {
+    const validation = usernameError(username, authMode === 'signin');
+    if (validation) {
+      setMessage(validation);
+      return;
+    }
+    setBusy(true);
+    setMessage('');
+    const result =
+      authMode === 'signup'
+        ? await signUpWithUsername(username, password)
+        : await signInWithUsername(username, password);
+    setBusy(false);
+    if (result.error) setMessage(result.error.message);
+    else if (authMode === 'signup' && !result.data.session)
+      setMessage(
+        'Account creation is awaiting an authentication configuration update.',
+      );
+  }
+  return (
+    <main className="home-page min-h-screen overflow-hidden bg-[#100c24] text-white selection:bg-[#d9ff59] selection:text-[#171126]">
+      <header className="relative z-20 border-b border-white/10 bg-[#100c24]/85 px-5 py-4 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+          <a href="./" className="flex items-center gap-3">
+            <span className="grid size-10 rotate-[-6deg] place-items-center rounded-xl bg-[#d9ff59] text-[#171126] shadow-[4px_4px_0_#ff5a7a]">
+              <Zap size={21} fill="currentColor" />
+            </span>
+            <span className="text-xl font-black tracking-tight">
+              Lernzeit<span className="text-[#d9ff59]">!</span>
+            </span>
+          </a>
+          <nav className="main-nav hidden items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-1 md:flex">
+            <a
+              href="./"
+              className="main-nav-link main-nav-link--active rounded-xl px-4 py-2 text-sm font-bold"
+            >
+              Battles
+            </a>
+            <a
+              href="./plan.html"
+              className="main-nav-link rounded-xl px-4 py-2 text-sm font-semibold"
+            >
+              Learning Plan
+            </a>
+            <a
+              href="./practice.html"
+              className="main-nav-link rounded-xl px-4 py-2 text-sm font-semibold"
+            >
+              Games
+            </a>
+          </nav>
+          {user ? (
+            <Button
+              variant="ghost"
+              onClick={() => void supabase.auth.signOut()}
+              className="text-white hover:bg-white/10 hover:text-white"
+            >
+              <LogOut />
+              Sign out
+            </Button>
+          ) : (
+            <a
+              href="#signin"
+              className="rounded-xl bg-[#d9ff59] px-4 py-2 text-sm font-black text-[#171126]"
+            >
+              Sign up / Sign in
+            </a>
+          )}
+        </div>
+      </header>
+      <section className="relative px-5 pb-16 pt-14">
+        <div className="pointer-events-none absolute left-[-8rem] top-10 size-80 rounded-full bg-[#6d4aff]/30 blur-3xl" />
+        <div className="pointer-events-none absolute right-[-5rem] top-32 size-72 rounded-full bg-[#ff4f87]/25 blur-3xl" />
+        <div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
+          <div>
+            <span className="inline-flex rotate-[-2deg] items-center gap-2 rounded-full border-2 border-[#d9ff59]/60 bg-[#d9ff59]/10 px-4 py-2 text-xs font-black uppercase tracking-[.18em] text-[#d9ff59]">
+              <Flame size={15} />
+              Live German showdowns
+            </span>
+            <h1 className="mt-6 max-w-3xl text-5xl font-black leading-[.95] tracking-[-.055em] sm:text-7xl">
+              Learn German.
+              <br />
+              <span className="bg-gradient-to-r from-[#d9ff59] via-[#62e6ff] to-[#ff6f9d] bg-clip-text text-transparent">
+                Beat your friends.
+              </span>
+            </h1>
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/65">
+              Jump into a live language battle, climb the leaderboard, and turn
+              grammar practice into something worth bragging about.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a
+                href="./contest.html"
+                className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#d9ff59] px-6 font-black text-[#171126] shadow-[5px_5px_0_#ff5a7a] transition hover:-translate-y-1"
+              >
+                Create a battle <Swords size={19} />
+              </a>
+              <a
+                href="./practice.html"
+                className="inline-flex h-12 items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-6 font-bold backdrop-blur hover:bg-white/15"
+              >
+                Train solo <Gamepad2 size={19} />
+              </a>
+            </div>
+            <div className="mt-10 flex gap-7 text-sm text-white/55">
+              <span>
+                <strong className="block text-2xl font-black text-white">
+                  10
+                </strong>
+                players max
+              </span>
+              <span>
+                <strong className="block text-2xl font-black text-white">
+                  3
+                </strong>
+                game types
+              </span>
+              <span>
+                <strong className="block text-2xl font-black text-white">
+                  ∞
+                </strong>
+                rematches
+              </span>
+            </div>
+          </div>
+          <div className="relative">
+            <div className="battle-lobby-frame absolute -inset-3 rotate-3 rounded-[2.2rem] bg-gradient-to-br from-[#6d4aff] to-[#ff4f87] opacity-80" />
+            <div className="battle-lobby-panel relative rounded-[2rem] border border-white/15 bg-[#1b1538]/95 p-5 shadow-2xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="battle-lobby-kicker text-xs font-black uppercase tracking-[.18em] text-[#62e6ff]">
+                    Open now
+                  </p>
+                  <h2 className="mt-1 text-2xl font-black">Battle lobbies</h2>
+                </div>
+                <span className="battle-live-pill flex items-center gap-2 rounded-full bg-[#30d786]/15 px-3 py-1 text-xs font-bold text-[#5bf0a5]">
+                  <span className="size-2 animate-pulse rounded-full bg-[#5bf0a5]" />
+                  Live
+                </span>
+              </div>
+              <BattleList user={user} battles={battles} loading={loading} />
+            </div>
+          </div>
+        </div>
+      </section>
+      {!user && (
+        <section
+          id="signin"
+          className="border-y border-white/10 bg-white/[.04] px-5 py-12"
+        >
+          <div className="mx-auto grid max-w-5xl items-center gap-8 md:grid-cols-2">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[.18em] text-[#ff83aa]">
+                Ready player one?
+              </p>
+              <h2 className="mt-2 text-3xl font-black">
+                {authMode === 'signup'
+                  ? 'Create your account and enter the arena.'
+                  : 'Welcome back to the arena.'}
+              </h2>
+              <p className="mt-3 text-white/55">
+                No email address or real name required. Choose a username to
+                keep your progress connected across devices.
+              </p>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                void submitAuth();
+              }}
+              className="rounded-3xl border border-white/10 bg-[#1b1538] p-5"
+            >
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Input
+                  type="text"
+                  aria-label="Username"
+                  placeholder={
+                    authMode === 'signin'
+                      ? 'Username or existing email'
+                      : 'Username'
+                  }
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="username"
+                  className="border-white/15 bg-white/10 text-white placeholder:text-white/35"
+                />
+                <Input
+                  type="password"
+                  aria-label="Password"
+                  placeholder="Password (6 characters minimum)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={
+                    authMode === 'signup' ? 'new-password' : 'current-password'
+                  }
+                  className="border-white/15 bg-white/10 text-white placeholder:text-white/35"
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={busy || !username.trim() || password.length < 6}
+                className="mt-3 w-full bg-[#d9ff59] font-black text-[#171126] hover:bg-[#c8ef48]"
+              >
+                <LogIn />
+                {busy
+                  ? 'Please wait…'
+                  : authMode === 'signup'
+                    ? 'Create account'
+                    : 'Sign in'}
+              </Button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode(authMode === 'signup' ? 'signin' : 'signup');
+                  setMessage('');
+                }}
+                className="mt-3 w-full py-2 text-sm font-semibold underline underline-offset-4"
+              >
+                {authMode === 'signup'
+                  ? 'Already have an account? Sign in'
+                  : 'New here? Create an account'}
+              </button>
+              {message && (
+                <p role="status" className="mt-2 text-sm text-[#ff83aa]">
+                  {message}
+                </p>
+              )}
+              {authMode === 'signup' && (
+                <p className="mt-2 text-xs text-white/45">
+                  Remember your password—without an email address, password
+                  recovery is not available.
+                </p>
+              )}
+            </form>
+          </div>
+        </section>
+      )}
+      <section className="px-5 py-14">
+        <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-2">
+          <a
+            href="./plan.html"
+            className="group rounded-[2rem] border border-white/10 bg-gradient-to-br from-[#182c4f] to-[#19213f] p-7 transition hover:-translate-y-1"
+          >
+            <span className="grid size-12 place-items-center rounded-2xl bg-[#62e6ff] text-[#10233b]">
+              <CalendarDays />
+            </span>
+            <p className="mt-8 text-xs font-black uppercase tracking-[.18em] text-[#62e6ff]">
+              Plan it
+            </p>
+            <h3 className="mt-2 text-3xl font-black">Own your week</h3>
+            <p className="mt-2 text-white/55">
+              Build your learning plan around real life and calendar
+              commitments.
+            </p>
+            <span className="mt-6 flex items-center gap-2 font-bold text-[#62e6ff]">
+              Open Learning Plan{' '}
+              <ArrowRight className="transition group-hover:translate-x-1" />
+            </span>
+          </a>
+          <a
+            href="./practice.html"
+            className="group rounded-[2rem] border border-white/10 bg-gradient-to-br from-[#46213d] to-[#291a3e] p-7 transition hover:-translate-y-1"
+          >
+            <span className="grid size-12 place-items-center rounded-2xl bg-[#ff6f9d] text-[#351125]">
+              <Trophy />
+            </span>
+            <p className="mt-8 text-xs font-black uppercase tracking-[.18em] text-[#ff83aa]">
+              Level up
+            </p>
+            <h3 className="mt-2 text-3xl font-black">Train your weak spots</h3>
+            <p className="mt-2 text-white/55">
+              Fast grammar and vocabulary games with instant feedback.
+            </p>
+            <span className="mt-6 flex items-center gap-2 font-bold text-[#ff83aa]">
+              Browse Games{' '}
+              <ArrowRight className="transition group-hover:translate-x-1" />
+            </span>
+          </a>
+        </div>
+      </section>
+      <footer className="border-t border-white/10 px-5 py-6 text-xs text-white/35">
+        <div className="mx-auto flex max-w-7xl justify-between">
+          <span>Lernzeit · German, but make it a game.</span>
+          <span>Version {APP_VERSION}</span>
+        </div>
+      </footer>
+    </main>
+  );
+}
+
+function BattleList({
+  user,
+  battles,
+  loading,
+}: {
+  user: User | null;
+  battles: OpenBattle[];
+  loading: boolean;
+}) {
+  if (!user)
+    return (
+      <div className="mt-5 rounded-2xl border border-dashed border-white/20 bg-black/10 p-8 text-center">
+        <Users className="mx-auto text-white/35" />
+        <p className="mt-3 font-bold">Sign in to reveal scheduled battles</p>
+        <p className="mt-1 text-sm text-white/45">
+          Open lobbies are visible to Lernzeit players.
+        </p>
+      </div>
+    );
+  if (loading)
+    return (
+      <div className="mt-5 animate-pulse rounded-2xl bg-white/5 p-8 text-center text-white/40">
+        Scanning for battles…
+      </div>
+    );
+  if (!battles.length)
+    return (
+      <div className="mt-5 rounded-2xl border border-dashed border-white/20 p-8 text-center">
+        <Sparkles className="mx-auto text-[#d9ff59]" />
+        <p className="mt-3 font-bold">The arena is quiet… for now.</p>
+        <a
+          href="./contest.html"
+          className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#d9ff59]"
+        >
+          Schedule the first battle <ArrowRight size={15} />
+        </a>
+      </div>
+    );
+  return (
+    <div className="mt-5 space-y-3">
+      {battles.slice(0, 5).map((battle, index) => (
+        <a
+          href="./contest.html"
+          key={battle.id}
+          className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[.06] p-3 transition hover:border-[#d9ff59]/50 hover:bg-white/10"
+        >
+          <span
+            className={`grid size-11 shrink-0 place-items-center rounded-xl font-black ${index === 0 ? 'bg-[#d9ff59] text-[#171126]' : 'bg-[#6d4aff] text-white'}`}
+          >
+            {battle.level}
+          </span>
+          <span className="min-w-0 flex-1">
+            <strong className="block truncate">
+              {battle.organizer_name}&apos;s battle
+            </strong>
+            <span className="block truncate text-xs text-white/45">
+              {scheduledLabel(battle.scheduled_for)} · {battle.question_count}{' '}
+              questions
+            </span>
+          </span>
+          <span className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-bold">
+            <Users size={13} />
+            {battle.player_count}/10
+          </span>
+          <Play
+            size={17}
+            className="text-[#d9ff59] transition group-hover:translate-x-1"
+          />
+        </a>
+      ))}
+    </div>
+  );
+}

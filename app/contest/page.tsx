@@ -24,8 +24,14 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 import { GERMANY_STATES } from '@/lib/germany-state-map';
 import { VIENNA_DISTRICTS } from '@/lib/vienna-district-map';
+import {
+  accountUsername,
+  signInWithUsername,
+  signUpWithUsername,
+  usernameError,
+} from '@/lib/username-auth';
 
-const APP_VERSION = '0.30.0',
+const APP_VERSION = '0.31.0',
   STORAGE = 'lernzeit-active-contest';
 type MapType = 'germany' | 'vienna';
 type StartMode = 'now' | 'later';
@@ -132,7 +138,7 @@ export default function ContestPage() {
     [feedback, setFeedback] = useState<Feedback | null>(null),
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
-    [email, setEmail] = useState(''),
+    [username, setUsername] = useState(''),
     [password, setPassword] = useState(''),
     [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const me = players.find((p) => p.user_id === user?.id),
@@ -177,11 +183,7 @@ export default function ContestPage() {
     void supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
       if (data.user) {
-        setName(
-          data.user.user_metadata?.full_name ||
-            data.user.email?.split('@')[0] ||
-            'Player',
-        );
+        setName(accountUsername(data.user));
         const saved = localStorage.getItem(STORAGE);
         if (saved) {
           setContestId(saved);
@@ -287,23 +289,22 @@ export default function ContestPage() {
       setAnswers(Array(current.question.answer_labels.length).fill(''));
   }, [current?.id]);
   async function submitAuth() {
+    const validation = usernameError(username, authMode === 'signin');
+    if (validation) {
+      setMessage(validation);
+      return;
+    }
     setBusy(true);
     setMessage('');
     const result =
       authMode === 'signup'
-        ? await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              emailRedirectTo: 'https://spirea89.github.io/GermanLearning/',
-            },
-          })
-        : await supabase.auth.signInWithPassword({ email, password });
+        ? await signUpWithUsername(username, password)
+        : await signInWithUsername(username, password);
     setBusy(false);
     if (result.error) setMessage(result.error.message);
     else if (authMode === 'signup' && !result.data.session)
       setMessage(
-        'Account created. Check your email to confirm your address, then sign in.',
+        'Account creation is awaiting an authentication configuration update.',
       );
   }
   async function create() {
@@ -461,7 +462,7 @@ export default function ContestPage() {
           </h1>
           <p className="mt-2 text-sm text-[#718077]">
             {authMode === 'signup'
-              ? 'Create an account to join battles and save your progress.'
+              ? 'Choose a username and password. No email or real name is required.'
               : 'Sign in so your score and identity are protected.'}
           </p>
           <form
@@ -472,12 +473,16 @@ export default function ContestPage() {
             className="mt-6 space-y-3"
           >
             <Input
-              type="email"
-              aria-label="Email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
+              type="text"
+              aria-label="Username"
+              placeholder={
+                authMode === 'signin'
+                  ? 'Username or existing email'
+                  : 'Username'
+              }
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoComplete="username"
             />
             <Input
               type="password"
@@ -492,7 +497,7 @@ export default function ContestPage() {
             <Button
               type="submit"
               className="w-full bg-[#5b45a1]"
-              disabled={busy || !email || password.length < 6}
+              disabled={busy || !username.trim() || password.length < 6}
             >
               <LogIn />
               {busy
@@ -504,6 +509,12 @@ export default function ContestPage() {
             {message && (
               <p role="status" className="text-sm text-red-600">
                 {message}
+              </p>
+            )}
+            {authMode === 'signup' && (
+              <p className="text-xs text-[#718077]">
+                Remember your password. Username-only accounts cannot receive a
+                password-reset email.
               </p>
             )}
             <button
