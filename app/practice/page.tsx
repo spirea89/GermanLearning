@@ -34,7 +34,7 @@ import {
   type VerbGameItem,
 } from '@/lib/game-content';
 
-const APP_VERSION = '0.31.0';
+const APP_VERSION = '0.31.1';
 type GameKey = 'opposites' | 'verb_past' | 'prepositions';
 type VerbMode = 'forms' | 'sentences';
 type LevelMap = Record<GameKey, string[]>;

@@ -31,7 +31,7 @@ import {
   usernameError,
 } from '@/lib/username-auth';
 
-const APP_VERSION = '0.31.0',
+const APP_VERSION = '0.31.1',
   STORAGE = 'lernzeit-active-contest';
 type MapType = 'germany' | 'vienna';
 type StartMode = 'now' | 'later';
@@ -128,7 +128,7 @@ export default function ContestPage() {
     [name, setName] = useState(''),
     [code, setCode] = useState(''),
     [level, setLevel] = useState('B1'),
-    [mapType, setMapType] = useState<MapType>('germany'),
+    [mapType, setMapType] = useState<MapType>('vienna'),
     [startMode, setStartMode] = useState<StartMode>('now'),
     [responseTime, setResponseTime] = useState(60),
     [battleDate, setBattleDate] = useState(() => dateInput(1)),
