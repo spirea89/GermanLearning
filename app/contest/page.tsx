@@ -31,7 +31,7 @@ import {
   usernameError,
 } from '@/lib/username-auth';
 
-const APP_VERSION = '0.32.0',
+const APP_VERSION = '0.32.1',
   STORAGE = 'lernzeit-active-contest';
 type MapType = 'germany' | 'vienna';
 type StartMode = 'now' | 'later';
@@ -927,7 +927,7 @@ function BattleObjectPhoto({ question }: { question: QuestionData }) {
       aria-label="Object to identify"
       style={{
         backgroundImage: `url(${question.image_url})`,
-        backgroundSize: `${10000 / w}% auto`,
+        backgroundSize: `${10000 / w}% ${10000 / h}%`,
         backgroundPosition: `${(x / (100 - w)) * 100}% ${(y / (100 - h)) * 100}%`,
       }}
     />

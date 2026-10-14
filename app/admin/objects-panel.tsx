@@ -16,7 +16,7 @@ import { supabase } from '@/lib/supabase';
 import type { RoomObjectItem } from '@/lib/game-content';
 
 const HEADER =
-  'room_key\troom_title\tarticle\tnoun\tenglish_translation\timage_url\thotspot_x\thotspot_y\thotspot_width\thotspot_height\tactive\tsort_order';
+  'room_key\troom_title\tarticle\tnoun\tenglish_translation\timage_url\tbattle_image_url\tbattle_crop_x\tbattle_crop_y\tbattle_crop_width\tbattle_crop_height\thotspot_x\thotspot_y\thotspot_width\thotspot_height\tactive\tsort_order';
 const EMPTY: Omit<RoomObjectItem, 'id' | 'level'> = {
   room_key: 'living_room',
   room_title: 'Living Room',
@@ -24,6 +24,11 @@ const EMPTY: Omit<RoomObjectItem, 'id' | 'level'> = {
   noun: '',
   english_translation: '',
   image_url: './images/rooms/living-room-a1.png',
+  battle_image_url: './images/objects/living-room-a1-atlas.png',
+  battle_crop_x: 0,
+  battle_crop_y: 0,
+  battle_crop_width: 33.3333,
+  battle_crop_height: 33.3333,
   hotspot_x: 10,
   hotspot_y: 10,
   hotspot_width: 15,
@@ -57,6 +62,11 @@ export function ObjectsPanel({
             noun: item.noun,
             english_translation: item.english_translation,
             image_url: item.image_url,
+            battle_image_url: item.battle_image_url,
+            battle_crop_x: Number(item.battle_crop_x),
+            battle_crop_y: Number(item.battle_crop_y),
+            battle_crop_width: Number(item.battle_crop_width),
+            battle_crop_height: Number(item.battle_crop_height),
             hotspot_x: Number(item.hotspot_x),
             hotspot_y: Number(item.hotspot_y),
             hotspot_width: Number(item.hotspot_width),
@@ -75,7 +85,8 @@ export function ObjectsPanel({
       !form.room_title.trim() ||
       !form.noun.trim() ||
       !form.english_translation.trim() ||
-      !form.image_url.trim()
+      !form.image_url.trim() ||
+      !form.battle_image_url.trim()
     ) {
       setMessage('Room, noun, translation, and image are required.');
       return;
@@ -91,6 +102,7 @@ export function ObjectsPanel({
       noun: form.noun.trim(),
       english_translation: form.english_translation.trim(),
       image_url: form.image_url.trim(),
+      battle_image_url: form.battle_image_url.trim(),
     };
     const result = editingId
       ? await supabase
@@ -128,6 +140,11 @@ export function ObjectsPanel({
         v.noun,
         v.english_translation,
         v.image_url,
+        v.battle_image_url,
+        v.battle_crop_x,
+        v.battle_crop_y,
+        v.battle_crop_width,
+        v.battle_crop_height,
         v.hotspot_x,
         v.hotspot_y,
         v.hotspot_width,
@@ -172,12 +189,17 @@ export function ObjectsPanel({
         noun: p[3]?.trim(),
         english_translation: p[4]?.trim(),
         image_url: p[5]?.trim(),
-        hotspot_x: Number(p[6]),
-        hotspot_y: Number(p[7]),
-        hotspot_width: Number(p[8]),
-        hotspot_height: Number(p[9]),
-        active: p[10]?.trim().toLowerCase() !== 'false',
-        sort_order: Number(p[11]) || (items.length + i + 1) * 10,
+        battle_image_url: p[6]?.trim(),
+        battle_crop_x: Number(p[7]),
+        battle_crop_y: Number(p[8]),
+        battle_crop_width: Number(p[9]),
+        battle_crop_height: Number(p[10]),
+        hotspot_x: Number(p[11]),
+        hotspot_y: Number(p[12]),
+        hotspot_width: Number(p[13]),
+        hotspot_height: Number(p[14]),
+        active: p[15]?.trim().toLowerCase() !== 'false',
+        sort_order: Number(p[16]) || (items.length + i + 1) * 10,
       };
     });
     if (
@@ -188,7 +210,8 @@ export function ObjectsPanel({
           !v.room_title ||
           !v.noun ||
           !v.english_translation ||
-          !v.image_url,
+          !v.image_url ||
+          !v.battle_image_url,
       )
     ) {
       setMessage('Import stopped: required object content is missing.');
@@ -268,8 +291,8 @@ export function ObjectsPanel({
               {editingId ? 'Edit object' : 'Add object'}
             </DialogTitle>
             <DialogDescription>
-              Coordinates are percentages of the room image and define both the
-              clickable area and battle crop.
+              Room hotspot coordinates control exploration. Battle crop
+              coordinates select the isolated object from its battle image.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2 sm:grid-cols-2">
@@ -315,6 +338,27 @@ export function ObjectsPanel({
               value={form.image_url}
               onChange={(v) => setForm({ ...form, image_url: v })}
             />
+            <Field
+              label="Battle object image URL"
+              value={form.battle_image_url}
+              onChange={(v) => setForm({ ...form, battle_image_url: v })}
+            />
+            {(
+              [
+                'battle_crop_x',
+                'battle_crop_y',
+                'battle_crop_width',
+                'battle_crop_height',
+              ] as const
+            ).map((key) => (
+              <Field
+                key={key}
+                label={key.replace('battle_crop_', 'Battle crop ')}
+                type="number"
+                value={String(form[key])}
+                onChange={(v) => setForm({ ...form, [key]: Number(v) })}
+              />
+            ))}
             {(
               [
                 'hotspot_x',
@@ -377,16 +421,16 @@ export function ObjectsPanel({
   );
 }
 function ObjectCrop({ item }: { item: RoomObjectItem }) {
-  const x = Number(item.hotspot_x),
-    y = Number(item.hotspot_y),
-    w = Number(item.hotspot_width),
-    h = Number(item.hotspot_height);
+  const x = Number(item.battle_crop_x),
+    y = Number(item.battle_crop_y),
+    w = Number(item.battle_crop_width),
+    h = Number(item.battle_crop_height);
   return (
     <span
       className="block aspect-square w-20 rounded-lg border bg-cover bg-no-repeat"
       style={{
-        backgroundImage: `url(${item.image_url})`,
-        backgroundSize: `${10000 / w}% auto`,
+        backgroundImage: `url(${item.battle_image_url})`,
+        backgroundSize: `${10000 / w}% ${10000 / h}%`,
         backgroundPosition: `${(x / (100 - w)) * 100}% ${(y / (100 - h)) * 100}%`,
       }}
     />

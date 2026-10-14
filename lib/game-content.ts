@@ -55,6 +55,11 @@ export type RoomObjectItem = {
   noun: string;
   english_translation: string;
   image_url: string;
+  battle_image_url: string;
+  battle_crop_x: number;
+  battle_crop_y: number;
+  battle_crop_width: number;
+  battle_crop_height: number;
   hotspot_x: number;
   hotspot_y: number;
   hotspot_width: number;
