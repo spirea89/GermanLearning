@@ -31,7 +31,7 @@ import {
   usernameError,
 } from '@/lib/username-auth';
 
-const APP_VERSION = '0.31.1',
+const APP_VERSION = '0.32.0',
   STORAGE = 'lernzeit-active-contest';
 type MapType = 'germany' | 'vienna';
 type StartMode = 'now' | 'later';
@@ -65,6 +65,8 @@ type QuestionData = {
   focus: string;
   translation: string;
   answer_labels: string[];
+  image_url?: string;
+  crop?: { x: number; y: number; width: number; height: number };
 };
 type Question = { id: string; position: number; question: QuestionData };
 type Feedback = {
@@ -233,8 +235,20 @@ export default function ContestPage() {
         .select('id,present_sentences,preterite_sentences,perfect_sentences')
         .eq('level', level)
         .eq('active', true),
+      supabase
+        .from('room_object_content')
+        .select('id')
+        .eq('level', level)
+        .eq('active', true)
+        .limit(1),
     ]).then(
-      ([gamesResult, oppositesResult, prepositionsResult, verbsResult]) => {
+      ([
+        gamesResult,
+        oppositesResult,
+        prepositionsResult,
+        verbsResult,
+        objectsResult,
+      ]) => {
         if (cancelled) return;
         const verbs = verbsResult.data ?? [];
         const hasCompleteSentences = verbs.some(
@@ -249,6 +263,7 @@ export default function ContestPage() {
           contentAvailable.add('prepositions');
         if (verbs.length) contentAvailable.add('verb_past_forms');
         if (hasCompleteSentences) contentAvailable.add('verb_past_sentences');
+        if (objectsResult.data?.length) contentAvailable.add('room_objects');
 
         const available = ((gamesResult.data ?? []) as CatalogGame[])
           .filter((game) => game.levels.includes(level))
@@ -898,6 +913,27 @@ function Card({
     </article>
   );
 }
+function BattleObjectPhoto({ question }: { question: QuestionData }) {
+  const crop = question.crop;
+  if (!question.image_url || !crop) return null;
+  const x = Number(crop.x),
+    y = Number(crop.y),
+    w = Number(crop.width),
+    h = Number(crop.height);
+  return (
+    <div
+      className="mx-auto mt-8 aspect-square w-full max-w-sm rounded-3xl border-4 border-white bg-cover bg-no-repeat shadow-xl"
+      role="img"
+      aria-label="Object to identify"
+      style={{
+        backgroundImage: `url(${question.image_url})`,
+        backgroundSize: `${10000 / w}% auto`,
+        backgroundPosition: `${(x / (100 - w)) * 100}% ${(y / (100 - h)) * 100}%`,
+      }}
+    />
+  );
+}
+
 function Field({
   label,
   children,
@@ -1103,11 +1139,15 @@ function Battle({
                         }}
                       />
                     </div>
-                    <p className="mt-8 text-3xl font-medium">
-                      {shown.question.game === 'prepositions'
-                        ? shown.question.prompt.replace('?', '………………')
-                        : shown.question.prompt}
-                    </p>
+                    {shown.question.game === 'room_objects' ? (
+                      <BattleObjectPhoto question={shown.question} />
+                    ) : (
+                      <p className="mt-8 text-3xl font-medium">
+                        {shown.question.game === 'prepositions'
+                          ? shown.question.prompt.replace('?', '………………')
+                          : shown.question.prompt}
+                      </p>
+                    )}
                     <p className="mt-3 text-sm font-medium text-[#5b45a1]">
                       {shown.question.focus}
                     </p>

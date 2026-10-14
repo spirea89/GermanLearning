@@ -31,11 +31,12 @@ import {
   splitVerbForm,
   type GameItem,
   type PrepositionGameItem,
+  type RoomObjectItem,
   type VerbGameItem,
 } from '@/lib/game-content';
 
-const APP_VERSION = '0.31.1';
-type GameKey = 'opposites' | 'verb_past' | 'prepositions';
+const APP_VERSION = '0.32.0';
+type GameKey = 'opposites' | 'verb_past' | 'prepositions' | 'room_objects';
 type VerbMode = 'forms' | 'sentences';
 type LevelMap = Record<GameKey, string[]>;
 type SelectedLevelMap = Record<GameKey, string>;
@@ -43,6 +44,7 @@ const DEFAULT_LEVELS: LevelMap = {
   opposites: ['B1'],
   verb_past: ['B1'],
   prepositions: ['B1'],
+  room_objects: ['A1'],
 };
 function shuffle<T>(values: T[]) {
   const result = [...values];
@@ -124,7 +126,8 @@ export default function PracticePage() {
     ),
     [prepositionSequence, setPrepositionSequence] = useState<
       PrepositionGameItem[]
-    >(FALLBACK_PREPOSITIONS);
+    >(FALLBACK_PREPOSITIONS),
+    [roomObjects, setRoomObjects] = useState<RoomObjectItem[]>([]);
   const [game, setGame] = useState<GameKey | null>(null),
     [practiceLevel, setPracticeLevel] = useState('B1'),
     [availableLevels, setAvailableLevels] = useState<LevelMap>(DEFAULT_LEVELS),
@@ -132,6 +135,7 @@ export default function PracticePage() {
       opposites: 'B1',
       verb_past: 'B1',
       prepositions: 'B1',
+      room_objects: 'A1',
     }),
     [verbMode, setVerbMode] = useState<VerbMode>('forms'),
     [index, setIndex] = useState(0),
@@ -181,16 +185,23 @@ export default function PracticePage() {
         .eq('active', true)
         .order('sort_order'),
       supabase
+        .from('room_object_content')
+        .select('*')
+        .eq('active', true)
+        .order('sort_order'),
+      supabase
         .from('practice_games')
         .select('game_key,levels')
         .eq('active', true),
-    ]).then(([a, b, c, configured]) => {
+    ]).then(([a, b, c, d, configured]) => {
       const loadedOpposites = (a.data ?? []) as GameItem[];
       const loadedVerbs = (b.data ?? []) as VerbGameItem[];
       const loadedPrepositions = (c.data ?? []) as PrepositionGameItem[];
+      const loadedRoomObjects = (d.data ?? []) as RoomObjectItem[];
       if (!a.error) setOpposites(loadedOpposites);
       if (!b.error) setVerbs(loadedVerbs);
       if (!c.error) setPrepositions(loadedPrepositions);
+      if (!d.error) setRoomObjects(loadedRoomObjects);
 
       const rows = (configured.data ?? []) as {
         game_key: GameKey;
@@ -202,6 +213,7 @@ export default function PracticePage() {
         prepositions: [
           ...new Set(loadedPrepositions.map((item) => item.level)),
         ],
+        room_objects: [...new Set(loadedRoomObjects.map((item) => item.level))],
       };
       const nextLevels = { ...DEFAULT_LEVELS };
       for (const key of Object.keys(nextLevels) as GameKey[]) {
@@ -223,6 +235,9 @@ export default function PracticePage() {
         prepositions: nextLevels.prepositions.includes(current.prepositions)
           ? current.prepositions
           : (nextLevels.prepositions[0] ?? ''),
+        room_objects: nextLevels.room_objects.includes(current.room_objects)
+          ? current.room_objects
+          : (nextLevels.room_objects[0] ?? ''),
       }));
     });
   }, []);
@@ -331,6 +346,13 @@ export default function PracticePage() {
     setGame('prepositions');
     reset();
   }
+  function startRoomObjects() {
+    const level = selectedLevels.room_objects;
+    if (!roomObjects.some((item) => item.level === level)) return;
+    setPracticeLevel(level);
+    setGame('room_objects');
+    reset();
+  }
   const complete =
     game === 'verb_past'
       ? !!answer.trim() && !!perfectAnswer.trim()
@@ -378,6 +400,7 @@ export default function PracticePage() {
           opposites={opposites}
           verbs={verbs}
           prepositions={prepositions}
+          roomObjects={roomObjects}
           availableLevels={availableLevels}
           selectedLevels={selectedLevels}
           selectLevel={(key, level) =>
@@ -386,6 +409,15 @@ export default function PracticePage() {
           startOpposites={startOpposites}
           startVerbs={startVerbs}
           startPrepositions={startPrepositions}
+          startRoomObjects={startRoomObjects}
+        />
+      ) : game === 'room_objects' ? (
+        <RoomExplorer
+          items={roomObjects.filter((item) => item.level === practiceLevel)}
+          level={practiceLevel}
+          practicedSeconds={practicedSeconds}
+          user={user}
+          stop={stop}
         />
       ) : (
         <section className="mx-auto max-w-3xl px-5 py-8 md:px-8">
@@ -694,26 +726,166 @@ function AnswerField({
     </label>
   );
 }
+function RoomExplorer({
+  items,
+  level,
+  practicedSeconds,
+  user,
+  stop,
+}: {
+  items: RoomObjectItem[];
+  level: string;
+  practicedSeconds: number;
+  user: User | null;
+  stop: () => Promise<void>;
+}) {
+  const rooms = [
+    ...new Map(items.map((item) => [item.room_key, item])).values(),
+  ];
+  const [roomKey, setRoomKey] = useState(rooms[0]?.room_key ?? '');
+  const [selected, setSelected] = useState<RoomObjectItem | null>(null);
+  const roomItems = items.filter((item) => item.room_key === roomKey);
+  const room = roomItems[0];
+  useEffect(() => {
+    if (!roomItems.some((item) => item.id === selected?.id)) setSelected(null);
+  }, [roomKey]);
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-6 md:px-8">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <Button variant="ghost" onClick={() => void stop()}>
+          <ArrowLeft /> All games
+        </Button>
+        <span className="flex items-center gap-2 text-sm font-medium text-[#637067]">
+          <Clock3 size={17} />
+          {user
+            ? `${Math.floor(practicedSeconds / 60)} min today`
+            : 'Sign in to record time'}
+        </span>
+      </div>
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#3c805d]">
+            {level} · Explore the house
+          </p>
+          <h1 className="mt-1 text-3xl font-semibold">Select an object</h1>
+          <p className="mt-1 text-sm text-[#718077]">
+            Tap the glowing areas to discover the German word and article.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {rooms.map((item) => (
+            <button
+              key={item.room_key}
+              type="button"
+              onClick={() => setRoomKey(item.room_key)}
+              className={`rounded-xl border px-4 py-2 text-sm font-semibold ${roomKey === item.room_key ? 'border-[#1f6f4a] bg-[#1f6f4a] text-white' : 'border-[#d6ddd5] bg-white text-[#526158]'}`}
+            >
+              {item.room_title}
+            </button>
+          ))}
+        </div>
+      </div>
+      {room ? (
+        <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
+          <div className="relative overflow-hidden rounded-3xl border-4 border-white bg-white shadow-xl">
+            <img
+              src={room.image_url}
+              alt={room.room_title}
+              className="block h-auto w-full"
+            />
+            {roomItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                aria-label={`Show ${item.article} ${item.noun}`}
+                onClick={() => setSelected(item)}
+                className={`absolute rounded-xl border-2 transition hover:bg-[#d9ff59]/35 focus:outline-none focus:ring-4 focus:ring-[#d9ff59]/70 ${selected?.id === item.id ? 'border-[#ff5a7a] bg-[#ff5a7a]/25' : 'border-[#d9ff59]/80 bg-[#d9ff59]/10'}`}
+                style={{
+                  left: `${item.hotspot_x}%`,
+                  top: `${item.hotspot_y}%`,
+                  width: `${item.hotspot_width}%`,
+                  height: `${item.hotspot_height}%`,
+                }}
+              >
+                <span className="sr-only">
+                  {item.article} {item.noun}
+                </span>
+              </button>
+            ))}
+          </div>
+          <aside className="flex min-h-52 items-center justify-center rounded-3xl border bg-white p-6 text-center shadow-sm">
+            {selected ? (
+              <div>
+                <ObjectCrop item={selected} />
+                <span
+                  className={`mx-auto mt-5 block w-fit rounded-full px-3 py-1 text-sm font-black text-white ${selected.article === 'der' ? 'bg-blue-600' : selected.article === 'die' ? 'bg-red-500' : 'bg-emerald-600'}`}
+                >
+                  {selected.article}
+                </span>
+                <p className="mt-2 text-4xl font-semibold">{selected.noun}</p>
+                <p className="mt-2 text-sm text-[#718077]">
+                  {selected.english_translation}
+                </p>
+              </div>
+            ) : (
+              <div>
+                <Sparkles className="mx-auto text-[#8aa795]" />
+                <p className="mt-3 font-semibold">
+                  Choose something in the room
+                </p>
+                <p className="mt-1 text-sm text-[#718077]">
+                  Its German name will appear here.
+                </p>
+              </div>
+            )}
+          </aside>
+        </div>
+      ) : (
+        <p>No objects are available for this room.</p>
+      )}
+    </section>
+  );
+}
+function ObjectCrop({ item }: { item: RoomObjectItem }) {
+  const x = Number(item.hotspot_x),
+    y = Number(item.hotspot_y),
+    w = Number(item.hotspot_width),
+    h = Number(item.hotspot_height);
+  return (
+    <span
+      className="mx-auto block aspect-square w-40 rounded-2xl border bg-cover bg-no-repeat shadow-inner"
+      style={{
+        backgroundImage: `url(${item.image_url})`,
+        backgroundSize: `${10000 / w}% auto`,
+        backgroundPosition: `${(x / (100 - w)) * 100}% ${(y / (100 - h)) * 100}%`,
+      }}
+    />
+  );
+}
 function Catalog({
   opposites,
   verbs,
   prepositions,
+  roomObjects,
   availableLevels,
   selectedLevels,
   selectLevel,
   startOpposites,
   startVerbs,
   startPrepositions,
+  startRoomObjects,
 }: {
   opposites: GameItem[];
   verbs: VerbGameItem[];
   prepositions: PrepositionGameItem[];
+  roomObjects: RoomObjectItem[];
   availableLevels: LevelMap;
   selectedLevels: SelectedLevelMap;
   selectLevel: (key: GameKey, level: string) => void;
   startOpposites: () => void;
   startVerbs: (m: VerbMode) => void;
   startPrepositions: () => void;
+  startRoomObjects: () => void;
 }) {
   const oppositeCount = opposites.filter(
     (item) => item.level === selectedLevels.opposites,
@@ -724,6 +896,9 @@ function Catalog({
   const contextCount = levelVerbs.filter(hasSentenceContext).length;
   const prepositionCount = prepositions.filter(
     (item) => item.level === selectedLevels.prepositions,
+  ).length;
+  const roomObjectCount = roomObjects.filter(
+    (item) => item.level === selectedLevels.room_objects,
   ).length;
   return (
     <section className="mx-auto max-w-6xl px-5 py-10 md:px-8">
@@ -793,6 +968,22 @@ function Catalog({
           />
           <Button onClick={startPrepositions} disabled={!prepositionCount}>
             Play
+          </Button>
+        </GameCard>
+        <GameCard
+          blue
+          title="Was ist das?"
+          meta={`Visual vocabulary · ${roomObjectCount} objects`}
+          description="Walk through rooms, select objects, and discover their German names with der, die, or das."
+        >
+          <LevelPicker
+            game="room_objects"
+            levels={availableLevels.room_objects}
+            value={selectedLevels.room_objects}
+            onChange={selectLevel}
+          />
+          <Button onClick={startRoomObjects} disabled={!roomObjectCount}>
+            Enter the house
           </Button>
         </GameCard>
         <GameCard

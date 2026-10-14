@@ -33,12 +33,14 @@ import { supabase } from '@/lib/supabase';
 import type {
   GameItem,
   PrepositionGameItem,
+  RoomObjectItem,
   VerbGameItem,
 } from '@/lib/game-content';
 import { VerbsPanel } from './verbs-panel';
 import { PrepositionsPanel } from './prepositions-panel';
+import { ObjectsPanel } from './objects-panel';
 
-const APP_VERSION = '0.31.1';
+const APP_VERSION = '0.32.0';
 const EMPTY_FORM = {
   phrase_before: '',
   target_word: '',
@@ -49,7 +51,7 @@ const EMPTY_FORM = {
   sort_order: 10,
 };
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
-type GameKey = 'opposites' | 'verb_past' | 'prepositions';
+type GameKey = 'opposites' | 'verb_past' | 'prepositions' | 'room_objects';
 type CatalogGame = {
   game_key: GameKey;
   title: string;
@@ -77,6 +79,7 @@ export default function AdminPage() {
   const [levelMessage, setLevelMessage] = useState('');
   const [verbs, setVerbs] = useState<VerbGameItem[]>([]);
   const [prepositions, setPrepositions] = useState<PrepositionGameItem[]>([]);
+  const [roomObjects, setRoomObjects] = useState<RoomObjectItem[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -104,6 +107,7 @@ export default function AdminPage() {
       { data: content },
       { data: verbContent },
       { data: prepositionContent },
+      { data: objectContent },
       { data: catalog },
     ] = await Promise.all([
       supabase
@@ -127,20 +131,31 @@ export default function AdminPage() {
         .select('*')
         .eq('level', level)
         .order('sort_order'),
+      supabase
+        .from('room_object_content')
+        .select('*')
+        .eq('level', level)
+        .order('sort_order'),
       supabase.from('practice_games').select('*').order('sort_order'),
     ]);
     setIsAdmin(!!admin);
     setItems((content ?? []) as GameItem[]);
     setVerbs((verbContent ?? []) as VerbGameItem[]);
     setPrepositions((prepositionContent ?? []) as PrepositionGameItem[]);
+    setRoomObjects((objectContent ?? []) as RoomObjectItem[]);
     setGameCatalog((catalog ?? []) as CatalogGame[]);
     setLoading(false);
   }
   function chooseGame(key: GameKey) {
+    const levels =
+      gameCatalog.find((game) => game.game_key === key)?.levels ?? [];
+    const nextContentLevel = levels.includes(contentLevel)
+      ? contentLevel
+      : (levels[0] ?? contentLevel);
     setSelectedGame(key);
-    setGameLevels(
-      gameCatalog.find((game) => game.game_key === key)?.levels ?? [],
-    );
+    setGameLevels(levels);
+    setContentLevel(nextContentLevel);
+    void load(user, nextContentLevel);
     setMessage('');
     setLevelMessage('');
   }
@@ -354,7 +369,9 @@ export default function AdminPage() {
                   ? 'Vergangenheitsformen der Verben'
                   : selectedGame === 'prepositions'
                     ? 'Präpositionalobjekte'
-                    : 'Games'}
+                    : selectedGame === 'room_objects'
+                      ? 'Was ist das? · Room objects'
+                      : 'Games'}
             </h1>
             <p className="mt-2 text-sm text-[#66736b]">
               {selectedGame
@@ -475,6 +492,12 @@ export default function AdminPage() {
               count={`${prepositions.length} questions`}
               onClick={() => chooseGame('prepositions')}
             />
+            <GameButton
+              title="Was ist das?"
+              meta={`${gameCatalog.find((game) => game.game_key === 'room_objects')?.levels.join(', ') || 'No levels'} · Visual vocabulary`}
+              count={`${roomObjects.length} objects`}
+              onClick={() => chooseGame('room_objects')}
+            />
           </div>
         ) : (
           <div className="mt-8">
@@ -566,6 +589,14 @@ export default function AdminPage() {
             ) : selectedGame === 'prepositions' ? (
               <PrepositionsPanel
                 items={prepositions}
+                level={contentLevel}
+                reload={async () => {
+                  await load(user, contentLevel);
+                }}
+              />
+            ) : selectedGame === 'room_objects' ? (
+              <ObjectsPanel
+                items={roomObjects}
                 level={contentLevel}
                 reload={async () => {
                   await load(user, contentLevel);
