@@ -38,3 +38,7 @@ jobs:
           path: dist/client
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # GitHub Pages can occasionally spend more than the default ten
+          # minutes in updating_pages even after the artifact is uploaded.
+          timeout: 1800000
