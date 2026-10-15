@@ -116,7 +116,11 @@ export function RoomExplorer3D({
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     scene.add(sun);
-    const objectPositions = buildDollhouse(scene, room.room_key);
+    const objectPositions = buildDollhouse(
+      scene,
+      room.room_key,
+      itemsRef.current,
+    );
 
     const avatar = createAvatar();
     avatar.position.set(0, 0.08, 2.7);
@@ -372,7 +376,11 @@ export function RoomExplorer3D({
   );
 }
 
-function buildDollhouse(scene: THREE.Scene, roomKey: string): SceneObjectMap {
+function buildDollhouse(
+  scene: THREE.Scene,
+  roomKey: string,
+  roomItems: RoomObjectItem[],
+): SceneObjectMap {
   const positions = new Map<string, THREE.Vector3>();
   const mark = (names: string[], x: number, y: number, z: number) =>
     names.forEach((name) =>
@@ -605,7 +613,7 @@ function buildDollhouse(scene: THREE.Scene, roomKey: string): SceneObjectMap {
     mark(['der Kräutertopf'], 3.4, 1.58, -4.05);
     mark(['der Blumenstrauß', 'die Vase'], 4.35, 1.82, -4.05);
     mark(['das Fenster'], 3.8, 3, -4.82);
-  } else {
+  } else if (roomKey === 'living_room') {
     addBox([4.1, 1.1, 1.25], [0, 0.65, -3.75], '#ef8f84');
     addBox([3.5, 1.15, 0.28], [0, 1.35, -4.25], '#f5a69b');
     addBox([1.3, 1.15, 1.3], [-4.3, 0.64, -1.9], '#f3b467');
@@ -702,6 +710,61 @@ function buildDollhouse(scene: THREE.Scene, roomKey: string): SceneObjectMap {
     mark(['der Korb'], 2.8, 0.7, -3.55);
     mark(['die Schale'], -0.2, 1.1, -0.8);
     mark(['das Sideboard'], 4.15, 1.75, -4.05);
+  } else {
+    const palette = ['#e07a5f', '#81b29a', '#f2cc8f', '#6d8dad', '#a98bc2'];
+    const largeNouns = new Set([
+      'Sofa',
+      'Bett',
+      'Badewanne',
+      'Auto',
+      'Esstisch',
+      'Schreibtisch',
+      'Kleiderschrank',
+      'Waschmaschine',
+      'Trockner',
+      'Werkbank',
+    ]);
+    const plantNouns = new Set(['Pflanze', 'Baum', 'Blume', 'Blumentopf']);
+    roomItems.forEach((item, index) => {
+      const column = index % 4;
+      const row = Math.floor(index / 4);
+      const x = -4.25 + column * 2.75;
+      const z = -3.55 + row * 2.35;
+      const color = palette[index % palette.length];
+      if (plantNouns.has(item.noun)) {
+        addCylinder(0.3, 0.55, [x, 0.28, z], '#b66f43');
+        addCylinder(0.08, 0.9, [x, 0.95, z], '#567d46');
+        addSphere(0.55, [x, 1.45, z], '#62a85b', [1.1, 0.8, 1]);
+      } else if (item.noun === 'Lampe') {
+        addCylinder(0.08, 1.6, [x, 0.8, z], '#5f554d');
+        addCylinder(0.48, 0.55, [x, 1.85, z], '#f3d58a');
+      } else if (
+        item.noun === 'Stuhl' ||
+        item.noun === 'Bürostuhl' ||
+        item.noun === 'Gartenstuhl'
+      ) {
+        addChair(x, z);
+      } else if (largeNouns.has(item.noun)) {
+        addBox([2, 0.85, 1.25], [x, 0.45, z], color);
+        addBox(
+          [1.75, 0.5, 0.18],
+          [x, 1.08, z - 0.5],
+          palette[(index + 1) % palette.length],
+        );
+        for (const legX of [-0.72, 0.72])
+          addBox([0.12, 0.35, 0.12], [x + legX, 0.18, z + 0.42], '#624735');
+      } else {
+        addBox([1.15, 1.15, 0.95], [x, 0.58, z], color);
+        addBox([0.72, 0.1, 0.06], [x, 0.75, z + 0.49], '#f8f4e8');
+        addSphere(0.08, [x + 0.38, 0.58, z + 0.5], '#f2d36b');
+      }
+      mark(
+        [`${item.article} ${item.noun}`],
+        x,
+        largeNouns.has(item.noun) ? 1.35 : 1.55,
+        z,
+      );
+    });
   }
   return positions;
 }

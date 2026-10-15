@@ -20,6 +20,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 import { RoomExplorer3D } from './room-explorer-3d';
+import { HouseBuilder, customRoomsToItems } from './house-builder';
+import type { HouseLevel, UserHouseRoom } from '@/lib/house-inventory';
 import {
   AUXILIARY_FORMS,
   FALLBACK_GAME_ITEMS,
@@ -36,7 +38,7 @@ import {
   type VerbGameItem,
 } from '@/lib/game-content';
 
-const APP_VERSION = '0.39.0';
+const APP_VERSION = '0.40.0';
 type GameKey = 'opposites' | 'verb_past' | 'prepositions' | 'room_objects';
 type VerbMode = 'forms' | 'sentences';
 type LevelMap = Record<GameKey, string[]>;
@@ -740,12 +742,31 @@ function RoomExplorer({
   user: User | null;
   stop: () => Promise<void>;
 }) {
+  const storageKey = `lernzeit-house-${user?.id ?? 'guest'}`;
+  const [customRooms, setCustomRooms] = useState<UserHouseRoom[]>([]);
+  const [builderOpen, setBuilderOpen] = useState(false);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      setCustomRooms(saved ? (JSON.parse(saved) as UserHouseRoom[]) : []);
+    } catch {
+      setCustomRooms([]);
+    }
+  }, [storageKey]);
+  const saveCustomRooms = (nextRooms: UserHouseRoom[]) => {
+    setCustomRooms(nextRooms);
+    localStorage.setItem(storageKey, JSON.stringify(nextRooms));
+  };
+  const customItems = customRoomsToItems(
+    customRooms.filter((room) => room.level === level),
+  );
+  const explorerItems = [...items, ...customItems];
   const rooms = [
-    ...new Map(items.map((item) => [item.room_key, item])).values(),
+    ...new Map(explorerItems.map((item) => [item.room_key, item])).values(),
   ];
   const [roomKey, setRoomKey] = useState(rooms[0]?.room_key ?? '');
   const [selected, setSelected] = useState<RoomObjectItem | null>(null);
-  const roomItems = items.filter((item) => item.room_key === roomKey);
+  const roomItems = explorerItems.filter((item) => item.room_key === roomKey);
   const room = roomItems[0];
   const currentRoomIndex = rooms.findIndex((item) => item.room_key === roomKey);
   const nextRoom =
@@ -776,7 +797,7 @@ function RoomExplorer({
             Move through the room, look around, and select a glowing object.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
           {rooms.map((item) => (
             <button
               key={item.room_key}
@@ -787,6 +808,13 @@ function RoomExplorer({
               {item.room_title}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setBuilderOpen(true)}
+            className="flex items-center gap-2 rounded-xl border border-[#1f6f4a] bg-[#e6f0e9] px-4 py-2 text-sm font-bold text-[#18583b] hover:bg-[#d7e8dd]"
+          >
+            <Settings size={16} /> Design my house
+          </button>
         </div>
       </div>
       {room ? (
@@ -804,7 +832,13 @@ function RoomExplorer({
           <aside className="flex min-h-52 items-center justify-center rounded-3xl border bg-white p-6 text-center shadow-sm">
             {selected ? (
               <div>
-                <ObjectCrop item={selected} />
+                {selected.image_url ? (
+                  <ObjectCrop item={selected} />
+                ) : (
+                  <div className="mx-auto grid size-40 place-items-center rounded-3xl bg-[#e4efe5] text-6xl shadow-inner">
+                    🏠
+                  </div>
+                )}
                 <span
                   className={`mx-auto mt-5 block w-fit rounded-full px-3 py-1 text-sm font-black text-white ${selected.article === 'der' ? 'bg-blue-600' : selected.article === 'die' ? 'bg-red-500' : 'bg-emerald-600'}`}
                 >
@@ -831,6 +865,14 @@ function RoomExplorer({
       ) : (
         <p>No objects are available for this room.</p>
       )}
+      {builderOpen ? (
+        <HouseBuilder
+          level={(level === 'A2' ? 'A2' : 'A1') as HouseLevel}
+          rooms={customRooms}
+          onChange={saveCustomRooms}
+          onClose={() => setBuilderOpen(false)}
+        />
+      ) : null}
     </section>
   );
 }
