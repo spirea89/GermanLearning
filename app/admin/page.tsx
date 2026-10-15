@@ -40,7 +40,7 @@ import { VerbsPanel } from './verbs-panel';
 import { PrepositionsPanel } from './prepositions-panel';
 import { ObjectsPanel } from './objects-panel';
 
-const APP_VERSION = '0.38.0';
+const APP_VERSION = '0.39.0';
 const EMPTY_FORM = {
   phrase_before: '',
   target_word: '',

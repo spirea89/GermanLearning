@@ -125,6 +125,7 @@ export function RoomExplorer3D({
     scene.add(avatar);
 
     const markerMeshes: THREE.Mesh[] = [];
+    const objectHitMeshes: THREE.Mesh[] = [];
     itemsRef.current.forEach((item, index) => {
       const marker = new THREE.Mesh(
         new THREE.RingGeometry(0.18, 0.3, 28),
@@ -144,8 +145,31 @@ export function RoomExplorer3D({
       marker.rotation.x = -Math.PI / 2;
       marker.renderOrder = 8;
       marker.userData.item = item;
+      marker.userData.hitPixels = THREE.MathUtils.clamp(
+        46 + Math.max(Number(item.hotspot_width), Number(item.hotspot_height)),
+        62,
+        115,
+      );
       scene.add(marker);
       markerMeshes.push(marker);
+
+      const hitRadius = THREE.MathUtils.clamp(
+        Math.max(Number(item.hotspot_width), Number(item.hotspot_height)) / 16,
+        0.7,
+        2.35,
+      );
+      const objectHitArea = new THREE.Mesh(
+        new THREE.SphereGeometry(hitRadius, 12, 8),
+        new THREE.MeshBasicMaterial({
+          transparent: true,
+          opacity: 0,
+          depthWrite: false,
+        }),
+      );
+      objectHitArea.position.copy(position);
+      objectHitArea.userData.item = item;
+      scene.add(objectHitArea);
+      objectHitMeshes.push(objectHitArea);
     });
 
     const raycaster = new THREE.Raycaster();
@@ -193,9 +217,35 @@ export function RoomExplorer3D({
         -((event.clientY - rect.top) / rect.height) * 2 + 1,
       );
       raycaster.setFromCamera(pointer, camera);
-      const hit = raycaster.intersectObjects(markerMeshes, false)[0];
-      if (hit?.object.userData.item)
+      const hit = raycaster.intersectObjects(
+        [...objectHitMeshes, ...markerMeshes],
+        false,
+      )[0];
+      if (hit?.object.userData.item) {
         onSelectRef.current(hit.object.userData.item);
+        return;
+      }
+
+      // Screen-space fallback makes small and thin objects easy to select on touch.
+      const clickX = event.clientX - rect.left;
+      const clickY = event.clientY - rect.top;
+      let closest: { marker: THREE.Mesh; distance: number } | null = null;
+      markerMeshes.forEach((marker) => {
+        const projected = marker.position.clone().project(camera);
+        if (projected.z < -1 || projected.z > 1) return;
+        const markerX = ((projected.x + 1) / 2) * rect.width;
+        const markerY = ((1 - projected.y) / 2) * rect.height;
+        const distance = Math.hypot(clickX - markerX, clickY - markerY);
+        if (
+          distance <= marker.userData.hitPixels &&
+          (!closest || distance < closest.distance)
+        )
+          closest = { marker, distance };
+      });
+      if (closest)
+        onSelectRef.current(
+          (closest as { marker: THREE.Mesh }).marker.userData.item,
+        );
     };
     const wheel = (event: WheelEvent) => {
       event.preventDefault();
