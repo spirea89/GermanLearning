@@ -35,8 +35,8 @@ export function RoomExplorer3D({
   const hostRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<AvatarRig | null>(null);
   const yawRef = useRef(0.72);
-  const pitchRef = useRef(0.62);
-  const distanceRef = useRef(12.5);
+  const pitchRef = useRef(1.02);
+  const distanceRef = useRef(14.5);
   const selectedRef = useRef(selectedId);
   const itemsRef = useRef(items);
   const onSelectRef = useRef(onSelect);
@@ -72,8 +72,8 @@ export function RoomExplorer3D({
     avatar.position.set(0, 0.08, 2.7);
     avatar.rotation.y = Math.PI;
     yawRef.current = 0.72;
-    pitchRef.current = 0.62;
-    distanceRef.current = 12.5;
+    pitchRef.current = 1.02;
+    distanceRef.current = 14.5;
   }
 
   useEffect(() => {
@@ -88,6 +88,9 @@ export function RoomExplorer3D({
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+    renderer.domElement.style.display = 'block';
     host.appendChild(renderer.domElement);
 
     scene.add(new THREE.HemisphereLight('#fff9e8', '#5b7553', 2.6));
@@ -138,7 +141,7 @@ export function RoomExplorer3D({
     const resize = () => {
       const width = host.clientWidth;
       const height = Math.max(460, host.clientHeight);
-      renderer.setSize(width, height, false);
+      renderer.setSize(width, height, true);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
     };
@@ -157,8 +160,8 @@ export function RoomExplorer3D({
       yawRef.current -= dx * 0.004;
       pitchRef.current = THREE.MathUtils.clamp(
         pitchRef.current + dy * 0.003,
-        0.3,
-        0.95,
+        0.5,
+        1.32,
       );
       lastX = event.clientX;
       lastY = event.clientY;
@@ -181,8 +184,8 @@ export function RoomExplorer3D({
       event.preventDefault();
       distanceRef.current = THREE.MathUtils.clamp(
         distanceRef.current + event.deltaY * 0.008,
-        8,
-        16,
+        9,
+        18,
       );
     };
     const keyDown = (event: KeyboardEvent) => {
@@ -333,6 +336,70 @@ function buildDollhouse(scene: THREE.Scene, roomKey: string): SceneObjectMap {
     scene.add(mesh);
     return mesh;
   };
+  const addSphere = (
+    radius: number,
+    position: [number, number, number],
+    color: string,
+    scale: [number, number, number] = [1, 1, 1],
+  ) => {
+    const mesh = new THREE.Mesh(
+      new THREE.SphereGeometry(radius, 20, 14),
+      new THREE.MeshStandardMaterial({ color, roughness: 0.72 }),
+    );
+    mesh.position.set(...position);
+    mesh.scale.set(...scale);
+    mesh.castShadow = true;
+    scene.add(mesh);
+    return mesh;
+  };
+  const addTorus = (
+    radius: number,
+    tube: number,
+    position: [number, number, number],
+    color: string,
+  ) => {
+    const mesh = new THREE.Mesh(
+      new THREE.TorusGeometry(radius, tube, 12, 28),
+      new THREE.MeshStandardMaterial({ color, roughness: 0.55 }),
+    );
+    mesh.position.set(...position);
+    mesh.castShadow = true;
+    scene.add(mesh);
+    return mesh;
+  };
+  const addChair = (x: number, z: number, rotation = 0) => {
+    const chair = new THREE.Group();
+    const chairBox = (
+      size: [number, number, number],
+      position: [number, number, number],
+      color: string,
+    ) => {
+      const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(...size),
+        new THREE.MeshStandardMaterial({ color, roughness: 0.78 }),
+      );
+      mesh.position.set(...position);
+      mesh.castShadow = true;
+      chair.add(mesh);
+    };
+    chairBox([0.82, 0.16, 0.82], [0, 0.82, 0], '#d88955');
+    chairBox([0.72, 0.12, 0.72], [0, 0.94, 0], '#46636b');
+    chairBox([0.82, 1.05, 0.14], [0, 1.42, 0.34], '#c97749');
+    for (const px of [-0.32, 0.32])
+      for (const pz of [-0.32, 0.32])
+        chairBox([0.1, 0.8, 0.1], [px, 0.4, pz], '#7b4e34');
+    chair.position.set(x, 0, z);
+    chair.rotation.y = rotation;
+    scene.add(chair);
+  };
+  const addWindow = (x: number, y: number, width: number) => {
+    addBox([width, 1.55, 0.06], [x, y, -4.87], '#9dd9ee', 0.18);
+    addBox([width + 0.16, 0.1, 0.12], [x, y + 0.82, -4.81], '#ffffff');
+    addBox([width + 0.16, 0.1, 0.12], [x, y - 0.82, -4.81], '#ffffff');
+    addBox([0.1, 1.7, 0.12], [x - width / 2, y, -4.81], '#ffffff');
+    addBox([0.1, 1.7, 0.12], [x + width / 2, y, -4.81], '#ffffff');
+    addBox([0.08, 1.55, 0.1], [x, y, -4.78], '#ffffff');
+  };
 
   addBox([30, 0.15, 30], [0, -0.18, 0], '#75ab57');
   addBox(
@@ -376,6 +443,52 @@ function buildDollhouse(scene: THREE.Scene, roomKey: string): SceneObjectMap {
     addCylinder(0.22, 0.45, [4.35, 1.24, -4.05], '#dbe8f0');
     addCylinder(0.55, 0.12, [0.3, 1.22, 0.6], '#e8bb45');
     addCylinder(0.7, 0.18, [0.3, 3.2, 0.6], '#f3c969');
+    // Appliance doors, controls and handles make the kitchen objects legible.
+    addBox([1.82, 0.05, 0.05], [-4.65, 1.55, -3.7], '#9caeb2');
+    addBox([0.08, 0.75, 0.08], [-3.95, 2.15, -3.66], '#738287');
+    addBox([1.12, 0.48, 0.05], [-2.3, 0.48, -3.68], '#11191e', 0.25);
+    for (const x of [-2.65, -2.3, -1.95])
+      addCylinder(0.08, 0.07, [x, 0.88, -3.66], '#d8dfe0').rotation.x =
+        Math.PI / 2;
+    for (const x of [-2.65, -1.95])
+      for (const z of [-4.25, -3.9])
+        addTorus(0.13, 0.025, [x, 1.14, z], '#444b50').rotation.x = Math.PI / 2;
+    addBox([1.45, 0.35, 0.45], [1.3, 1.01, -4.02], '#8fc7d0');
+    const faucet = addTorus(0.3, 0.05, [1.63, 1.43, -4.02], '#d5dcde');
+    faucet.rotation.y = Math.PI / 2;
+    for (const x of [-0.2, 1.55, 3.3, 4.85]) {
+      addBox([1.45, 1.05, 0.58], [x, 2.55, -4.5], '#f3eee2');
+      addCylinder(0.035, 0.34, [x + 0.52, 2.55, -4.16], '#98765d').rotation.z =
+        Math.PI / 2;
+    }
+    addWindow(3.95, 2.75, 1.7);
+    addChair(-1.8, 0.6, Math.PI / 2);
+    addChair(2.2, 0.6, -Math.PI / 2);
+    const kettleBody = addSphere(
+      0.33,
+      [3.55, 1.45, -4.04],
+      '#dde5e6',
+      [1, 1.15, 0.9],
+    );
+    kettleBody.rotation.y = -0.2;
+    addTorus(0.32, 0.045, [3.55, 1.56, -4.02], '#596a70').rotation.y =
+      Math.PI / 2;
+    addBox([0.18, 0.12, 0.38], [3.83, 1.55, -4.02], '#c9d3d5');
+    addBox([0.46, 0.08, 0.28], [4.5, 1.47, -4.03], '#3b4145');
+    addBox([0.46, 0.08, 0.04], [4.5, 1.58, -3.76], '#494f52');
+    const cup = addCylinder(0.16, 0.3, [1.15, 1.28, 0.3], '#f7f0e0');
+    cup.rotation.x = 0;
+    addTorus(0.13, 0.035, [1.31, 1.31, 0.3], '#f7f0e0').rotation.y =
+      Math.PI / 2;
+    addCylinder(0.3, 0.035, [0.8, 1.18, 0.75], '#f9faf8');
+    for (const [x, z, color] of [
+      [0.15, 0.55, '#e94f37'],
+      [0.42, 0.62, '#f7b32b'],
+      [0.25, 0.82, '#74a44b'],
+    ] as const)
+      addSphere(0.14, [x, 1.42, z], color);
+    for (let x = -3.9; x < 5.2; x += 1.5)
+      addBox([0.04, 0.3, 0.04], [x, 0.45, -3.82], '#d9e2dc');
     mark(['der Kühlschrank'], -4.65, 2.4, -3.65);
     mark(['der Ofen'], -2.3, 1.3, -3.65);
     mark(['das Kochfeld'], -2.3, 1.25, -3.8);
@@ -421,6 +534,63 @@ function buildDollhouse(scene: THREE.Scene, roomKey: string): SceneObjectMap {
     addBox([1.2, 0.14, 0.8], [0.65, 1.4, -3.25], '#f7e1ba');
     addCylinder(0.42, 0.45, [2.8, 0.22, -3.55], '#cf7b53');
     addBox([1.4, 0.72, 0.85], [2.7, 0.36, 1.95], '#b98256');
+    // Upholstery, legs and accessories turn the simple silhouettes into furniture.
+    for (const x of [-1.45, 1.45]) {
+      addBox([0.42, 1.05, 1.38], [x, 0.82, -3.72], '#d86f68');
+      addBox([0.16, 0.42, 0.16], [x, 0.2, -3.45], '#684838');
+    }
+    for (const x of [-0.95, 0, 0.95])
+      addBox([0.82, 0.2, 0.82], [x, 1.17, -3.55], '#f3a29a');
+    addBox([0.78, 0.18, 0.8], [-4.3, 1.13, -1.85], '#f9cf91');
+    addBox([0.95, 1.05, 0.22], [-4.3, 1.35, -2.35], '#dd9552');
+    for (const x of [-4.68, -3.92])
+      addBox([0.18, 0.65, 1.15], [x, 0.85, -1.95], '#e8a65c');
+    for (const x of [-1.25, 0.85])
+      for (const z of [-1.3, -0.3])
+        addCylinder(0.09, 0.62, [x, 0.32, z], '#77513a');
+    addBox([2.24, 1.18, 0.08], [4.15, 2.3, -4.53], '#152530', 0.18);
+    addBox([0.18, 0.5, 0.18], [4.15, 1.55, -4.3], '#303b40');
+    addBox([1.05, 0.08, 0.5], [4.15, 1.32, -4.28], '#303b40');
+    const bookColors = ['#ef6f6c', '#f2c14e', '#5ca4a9', '#7c6bb1', '#86b95b'];
+    for (let shelf = 0; shelf < 4; shelf++)
+      for (let book = 0; book < 5; book++)
+        addBox(
+          [0.18, 0.34 + (book % 2) * 0.08, 0.34],
+          [-5.45 + book * 0.27, 0.48 + shelf * 0.5, -4.02],
+          bookColors[(shelf + book) % bookColors.length],
+        );
+    addWindow(-2.25, 2.7, 1.8);
+    addBox([0.62, 2.5, 0.08], [-3.42, 2.45, -4.72], '#d9b7e8');
+    addBox([0.62, 2.5, 0.08], [-1.08, 2.45, -4.72], '#d9b7e8');
+    const clockFace = addCylinder(0.42, 0.09, [-0.7, 3.1, -4.76], '#fbfaf5');
+    clockFace.rotation.x = Math.PI / 2;
+    const hourHand = addBox([0.05, 0.34, 0.04], [-0.7, 3.23, -4.68], '#263238');
+    hourHand.rotation.z = -0.4;
+    const minuteHand = addBox(
+      [0.05, 0.42, 0.04],
+      [-0.53, 3.1, -4.67],
+      '#263238',
+    );
+    minuteHand.rotation.z = Math.PI / 2;
+    addBox([2.2, 1.15, 0.08], [1.8, 2.7, -4.72], '#a56a43');
+    addBox([1.9, 0.85, 0.06], [1.8, 2.7, -4.66], '#5d9c8b');
+    for (const [x, y, scale] of [
+      [3.7, 1.25, 0.55],
+      [3.38, 1.6, 0.42],
+      [4.02, 1.65, 0.48],
+      [3.65, 1.95, 0.44],
+    ] as const)
+      addSphere(scale, [x, y, -2.7], '#4f9d58', [1.25, 0.65, 0.8]);
+    addTorus(0.38, 0.07, [2.8, 0.58, -3.55], '#a96e42').rotation.x =
+      Math.PI / 2;
+    addCylinder(0.42, 0.08, [-0.2, 0.83, -0.8], '#dba833');
+    for (const x of [3.45, 4.15, 4.85]) {
+      addBox([0.58, 1.05, 0.06], [x, 0.82, -3.74], '#596f5e');
+      addSphere(0.045, [x + 0.2, 0.82, -3.68], '#d7bd74');
+    }
+    for (const x of [2.2, 3.2])
+      for (const z of [1.65, 2.25])
+        addBox([0.1, 0.7, 0.1], [x, 0.35, z], '#73513a');
     mark(['das Sofa'], 0, 1.65, -3.15);
     mark(['der Sessel'], -4.3, 1.55, -1.9);
     mark(['die Lampe'], -4.25, 2.85, 2.8);
