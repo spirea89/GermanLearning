@@ -36,7 +36,7 @@ import {
   type VerbGameItem,
 } from '@/lib/game-content';
 
-const APP_VERSION = '0.37.0';
+const APP_VERSION = '0.38.0';
 type GameKey = 'opposites' | 'verb_past' | 'prepositions' | 'room_objects';
 type VerbMode = 'forms' | 'sentences';
 type LevelMap = Record<GameKey, string[]>;
@@ -747,6 +747,9 @@ function RoomExplorer({
   const [selected, setSelected] = useState<RoomObjectItem | null>(null);
   const roomItems = items.filter((item) => item.room_key === roomKey);
   const room = roomItems[0];
+  const currentRoomIndex = rooms.findIndex((item) => item.room_key === roomKey);
+  const nextRoom =
+    rooms.length > 1 ? rooms[(currentRoomIndex + 1) % rooms.length] : null;
   useEffect(() => {
     if (!roomItems.some((item) => item.id === selected?.id)) setSelected(null);
   }, [roomKey]);
@@ -793,6 +796,10 @@ function RoomExplorer({
             items={roomItems}
             selectedId={selected?.id}
             onSelect={setSelected}
+            nextRoomTitle={nextRoom?.room_title}
+            onEnterRoom={
+              nextRoom ? () => setRoomKey(nextRoom.room_key) : undefined
+            }
           />
           <aside className="flex min-h-52 items-center justify-center rounded-3xl border bg-white p-6 text-center shadow-sm">
             {selected ? (

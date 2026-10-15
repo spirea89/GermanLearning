@@ -26,11 +26,15 @@ export function RoomExplorer3D({
   items,
   selectedId,
   onSelect,
+  nextRoomTitle,
+  onEnterRoom,
 }: {
   room: RoomObjectItem;
   items: RoomObjectItem[];
   selectedId?: string;
   onSelect: (item: RoomObjectItem) => void;
+  nextRoomTitle?: string;
+  onEnterRoom?: () => void;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<AvatarRig | null>(null);
@@ -40,9 +44,12 @@ export function RoomExplorer3D({
   const selectedRef = useRef(selectedId);
   const itemsRef = useRef(items);
   const onSelectRef = useRef(onSelect);
+  const onEnterRoomRef = useRef(onEnterRoom);
+  const transitioningRef = useRef(false);
   selectedRef.current = selectedId;
   itemsRef.current = items;
   onSelectRef.current = onSelect;
+  onEnterRoomRef.current = onEnterRoom;
   const itemSignature = items.map((item) => item.id).join('|');
 
   function moveCharacter(forward: number, sideways: number) {
@@ -63,6 +70,15 @@ export function RoomExplorer3D({
     );
     if (Math.abs(dx) + Math.abs(dz) > 0.001)
       avatar.rotation.y = Math.atan2(dx, dz);
+    if (
+      avatar.position.x > 4.65 &&
+      avatar.position.z > 1.15 &&
+      !transitioningRef.current &&
+      onEnterRoomRef.current
+    ) {
+      transitioningRef.current = true;
+      onEnterRoomRef.current();
+    }
     return true;
   }
 
@@ -80,6 +96,7 @@ export function RoomExplorer3D({
     const host = hostRef.current;
     if (!host) return;
     const scene = new THREE.Scene();
+    transitioningRef.current = false;
     scene.background = new THREE.Color('#a7daf0');
     scene.fog = new THREE.Fog('#a7daf0', 23, 42);
     const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 60);
@@ -277,6 +294,12 @@ export function RoomExplorer3D({
           Arrows or WASD · Scroll to zoom · Click glowing objects
         </p>
       </div>
+      {nextRoomTitle ? (
+        <div className="pointer-events-none absolute right-4 top-4 rounded-2xl border border-white/30 bg-[#2d6a4f]/90 px-4 py-3 text-right text-xs font-bold text-white shadow-lg backdrop-blur">
+          <p className="uppercase tracking-[.14em] text-white/70">Doorway</p>
+          <p className="mt-1 text-sm">Walk through to {nextRoomTitle} →</p>
+        </div>
+      ) : null}
       <div className="absolute bottom-4 left-4 grid grid-cols-3 gap-1 rounded-2xl bg-black/60 p-2 backdrop-blur">
         <span />
         <Control label="Walk forward" onClick={() => moveCharacter(0.7, 0)}>
@@ -412,6 +435,26 @@ function buildDollhouse(scene: THREE.Scene, roomKey: string): SceneObjectMap {
   addBox([12.5, 0.16, 0.32], [0, 3.95, -5], '#fffaf0');
   addBox([0.32, 0.16, 10.5], [-6, 3.95, 0], '#fffaf0');
   addBox([2.8, 0.08, 6.5], [7.6, 0, 0.6], '#d8c19e');
+
+  // Shared doorway: crossing this threshold loads the next connected room.
+  addBox([0.28, 3, 0.28], [5.45, 1.5, 1.35], '#6f432c');
+  addBox([0.28, 3, 0.28], [5.45, 1.5, 3.85], '#6f432c');
+  addBox([0.3, 0.3, 2.8], [5.45, 3, 2.6], '#6f432c');
+  const openDoor = addBox([0.16, 2.65, 1.95], [5.05, 1.38, 3.62], '#b87949');
+  openDoor.rotation.y = -0.72;
+  addSphere(0.08, [4.43, 1.45, 3.08], '#f2c14e');
+  addBox([1.2, 0.035, 1.65], [4.75, 0.12, 2.6], '#68d391', 0.35);
+  const doorwayBeacon = new THREE.Mesh(
+    new THREE.ConeGeometry(0.28, 0.55, 4),
+    new THREE.MeshStandardMaterial({
+      color: '#d9ff59',
+      emissive: '#89bd21',
+      emissiveIntensity: 0.8,
+    }),
+  );
+  doorwayBeacon.position.set(4.85, 3.45, 2.6);
+  doorwayBeacon.rotation.z = Math.PI;
+  scene.add(doorwayBeacon);
 
   if (roomKey === 'kitchen') {
     addBox([10, 0.9, 0.75], [0.5, 0.45, -4.25], '#8fbcad');

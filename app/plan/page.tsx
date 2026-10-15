@@ -48,7 +48,7 @@ import {
   usernameError,
 } from '@/lib/username-auth';
 
-const APP_VERSION = '0.37.0';
+const APP_VERSION = '0.38.0';
 const STORAGE_KEY = 'lernzeit-blockers-v1';
 type Blocker = {
   id: string;
