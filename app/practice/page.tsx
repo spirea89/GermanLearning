@@ -36,7 +36,7 @@ import {
   type VerbGameItem,
 } from '@/lib/game-content';
 
-const APP_VERSION = '0.34.0';
+const APP_VERSION = '0.35.0';
 type GameKey = 'opposites' | 'verb_past' | 'prepositions' | 'room_objects';
 type VerbMode = 'forms' | 'sentences';
 type LevelMap = Record<GameKey, string[]>;
@@ -768,7 +768,7 @@ function RoomExplorer({
           <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#3c805d]">
             {level} · Explore the house
           </p>
-          <h1 className="mt-1 text-3xl font-semibold">Select an object</h1>
+          <h1 className="mt-1 text-3xl font-semibold">Walk through the room</h1>
           <p className="mt-1 text-sm text-[#718077]">
             Move through the room, look around, and select a glowing object.
           </p>
