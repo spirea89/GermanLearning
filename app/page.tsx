@@ -25,7 +25,7 @@ import {
   usernameError,
 } from '@/lib/username-auth';
 
-const APP_VERSION = '0.41.0';
+const APP_VERSION = '0.42.0';
 type OpenBattle = {
   id: string;
   level: string;

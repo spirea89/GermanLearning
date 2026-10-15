@@ -16,11 +16,13 @@ export function HouseBuilder({
   rooms,
   onChange,
   onClose,
+  builtInRooms,
 }: {
   level: HouseLevel;
   rooms: UserHouseRoom[];
   onChange: (rooms: UserHouseRoom[]) => void;
   onClose: () => void;
+  builtInRooms: { key: string; name: string; objectCount: number }[];
 }) {
   const roomsAtLevel = rooms.filter((room) => room.level === level);
   const [editingId, setEditingId] = useState<string | null>(
@@ -30,29 +32,21 @@ export function HouseBuilder({
   const [draftName, setDraftName] = useState('');
   const [draftType, setDraftType] = useState('bedroom');
   const [draftObjects, setDraftObjects] = useState<string[]>([]);
-  const [draftPlacements, setDraftPlacements] = useState<
-    Record<string, { x: number; z: number }>
-  >({});
   const isNew = editingId === 'new';
   const roomType = isNew ? draftType : (editingRoom?.roomType ?? 'bedroom');
   const selectedObjects = isNew ? draftObjects : (editingRoom?.objectIds ?? []);
-  const placements = isNew ? draftPlacements : (editingRoom?.placements ?? {});
   const availableObjects = useMemo(
     () => inventoryForRoom(roomType, level),
     [roomType, level],
   );
 
   const updateObjects = (objectIds: string[]) => {
-    const nextPlacements = { ...placements };
-    objectIds.forEach((id, index) => {
-      if (!nextPlacements[id]) nextPlacements[id] = defaultPlacement(index);
-    });
+    const nextPlacements = { ...(editingRoom?.placements ?? {}) };
     Object.keys(nextPlacements).forEach((id) => {
       if (!objectIds.includes(id)) delete nextPlacements[id];
     });
     if (isNew) {
       setDraftObjects(objectIds);
-      setDraftPlacements(nextPlacements);
     } else if (editingRoom)
       onChange(
         rooms.map((room) =>
@@ -62,24 +56,11 @@ export function HouseBuilder({
         ),
       );
   };
-  const updatePlacement = (objectId: string, x: number, z: number) => {
-    const nextPlacements = { ...placements, [objectId]: { x, z } };
-    if (isNew) setDraftPlacements(nextPlacements);
-    else if (editingRoom)
-      onChange(
-        rooms.map((room) =>
-          room.id === editingRoom.id
-            ? { ...room, placements: nextPlacements }
-            : room,
-        ),
-      );
-  };
   const startNew = () => {
     setEditingId('new');
     setDraftName('');
     setDraftType('bedroom');
     setDraftObjects([]);
-    setDraftPlacements({});
   };
   const createRoom = () => {
     const name = draftName.trim();
@@ -93,7 +74,7 @@ export function HouseBuilder({
         roomType: draftType,
         level,
         objectIds: draftObjects,
-        placements: draftPlacements,
+        placements: {},
       },
     ]);
     setEditingId(id);
@@ -132,6 +113,25 @@ export function HouseBuilder({
               <Plus size={18} /> Add a room
             </button>
             <div className="mt-4 space-y-2">
+              <p className="px-1 text-[10px] font-bold uppercase tracking-[.16em] text-[#68776f]">
+                Included rooms
+              </p>
+              {builtInRooms.map((room) => (
+                <div
+                  key={room.key}
+                  className="rounded-xl border border-[#c9d7cb] bg-[#e1ece3] p-3"
+                >
+                  <span className="flex items-center gap-2 font-bold">
+                    <Home size={16} /> {room.name}
+                  </span>
+                  <span className="mt-1 block text-xs text-[#68776f]">
+                    Included · {room.objectCount} objects
+                  </span>
+                </div>
+              ))}
+              <p className="px-1 pt-3 text-[10px] font-bold uppercase tracking-[.16em] text-[#68776f]">
+                My rooms
+              </p>
               {roomsAtLevel.map((room) => {
                 const type = HOUSE_ROOM_TYPES.find(
                   (entry) => entry.key === room.roomType,
@@ -179,7 +179,6 @@ export function HouseBuilder({
                     onChange={(event) => {
                       setDraftType(event.target.value);
                       setDraftObjects([]);
-                      setDraftPlacements({});
                     }}
                     className="mt-2 h-11 w-full rounded-xl border border-[#cfc7b8] bg-white px-3 font-normal outline-none focus:border-[#1f6f4a]"
                   >
@@ -283,20 +282,6 @@ export function HouseBuilder({
                     );
                   })}
                 </div>
-                {selectedObjects.length ? (
-                  <div className="mt-7">
-                    <h3 className="text-lg font-bold">Arrange the room</h3>
-                    <p className="text-sm text-[#68776f]">
-                      Drag each object to the place where you want it. The same
-                      position is used in the 3D room.
-                    </p>
-                    <RoomPlanner
-                      objectIds={selectedObjects}
-                      placements={placements}
-                      onMove={updatePlacement}
-                    />
-                  </div>
-                ) : null}
                 {isNew ? (
                   <div className="sticky bottom-0 mt-6 flex justify-end border-t border-[#d8d0c2] bg-[#f7f2e8]/95 pt-4 backdrop-blur">
                     <button
@@ -322,78 +307,6 @@ export function HouseBuilder({
   );
 }
 
-function defaultPlacement(index: number) {
-  return { x: 16 + (index % 4) * 22, z: 20 + Math.floor(index / 4) * 24 };
-}
-
-function RoomPlanner({
-  objectIds,
-  placements,
-  onMove,
-}: {
-  objectIds: string[];
-  placements: Record<string, { x: number; z: number }>;
-  onMove: (objectId: string, x: number, z: number) => void;
-}) {
-  return (
-    <div className="relative mt-4 aspect-[4/3] overflow-hidden rounded-2xl border-4 border-[#7d5a3c] bg-[linear-gradient(90deg,rgba(91,66,43,.08)_1px,transparent_1px),linear-gradient(rgba(91,66,43,.08)_1px,transparent_1px),#dfc89f] bg-[size:32px_32px] shadow-inner">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-3 bg-[#f5efe3]" />
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-3 bg-[#f5efe3]" />
-      {objectIds.map((objectId, index) => {
-        const inventoryItem = HOUSE_INVENTORY.find(
-          (entry) => entry.id === objectId,
-        );
-        if (!inventoryItem) return null;
-        const placement = placements[objectId] ?? defaultPlacement(index);
-        return (
-          <div
-            key={objectId}
-            role="button"
-            tabIndex={0}
-            aria-label={`Move ${inventoryItem.article} ${inventoryItem.noun}`}
-            title={`Drag ${inventoryItem.article} ${inventoryItem.noun}`}
-            onPointerDown={(event) => {
-              event.currentTarget.setPointerCapture(event.pointerId);
-              event.preventDefault();
-            }}
-            onPointerMove={(event) => {
-              if (!event.currentTarget.hasPointerCapture(event.pointerId))
-                return;
-              const floor = event.currentTarget.parentElement;
-              if (!floor) return;
-              const rect = floor.getBoundingClientRect();
-              const x = Math.max(
-                6,
-                Math.min(94, ((event.clientX - rect.left) / rect.width) * 100),
-              );
-              const z = Math.max(
-                8,
-                Math.min(92, ((event.clientY - rect.top) / rect.height) * 100),
-              );
-              onMove(objectId, x, z);
-            }}
-            className="absolute w-[18%] min-w-14 -translate-x-1/2 -translate-y-1/2 cursor-grab touch-none select-none rounded-xl border-2 border-white bg-white p-1 shadow-lg active:cursor-grabbing active:ring-4 active:ring-[#4f9d69]/40"
-            style={{ left: `${placement.x}%`, top: `${placement.z}%` }}
-          >
-            <img
-              src={inventoryImage(objectId)}
-              alt=""
-              draggable={false}
-              className="aspect-[4/3] w-full rounded-lg object-cover"
-            />
-            <span className="block truncate px-1 py-1 text-center text-[10px] font-bold">
-              {inventoryItem.article} {inventoryItem.noun}
-            </span>
-          </div>
-        );
-      })}
-      <span className="pointer-events-none absolute bottom-2 right-3 rounded-full bg-black/55 px-3 py-1 text-[10px] font-bold text-white">
-        Top view · drag objects
-      </span>
-    </div>
-  );
-}
-
 export function customRoomsToItems(rooms: UserHouseRoom[]) {
   return rooms.flatMap((room) =>
     room.objectIds.flatMap((objectId, index) => {
@@ -401,7 +314,7 @@ export function customRoomsToItems(rooms: UserHouseRoom[]) {
         (entry) => entry.id === objectId,
       );
       if (!inventoryItem) return [];
-      const placement = room.placements?.[objectId] ?? defaultPlacement(index);
+      const placement = room.placements?.[objectId];
       return [
         {
           id: `custom-${room.id}-${objectId}`,
@@ -417,8 +330,8 @@ export function customRoomsToItems(rooms: UserHouseRoom[]) {
           battle_crop_y: 0,
           battle_crop_width: 100,
           battle_crop_height: 100,
-          hotspot_x: placement.x,
-          hotspot_y: placement.z,
+          hotspot_x: placement?.x ?? -1,
+          hotspot_y: placement?.z ?? -1,
           hotspot_width: 14,
           hotspot_height: 14,
           active: true,

@@ -28,6 +28,7 @@ export function RoomExplorer3D({
   onSelect,
   nextRoomTitle,
   onEnterRoom,
+  onPlaceObject,
 }: {
   room: RoomObjectItem;
   items: RoomObjectItem[];
@@ -35,6 +36,7 @@ export function RoomExplorer3D({
   onSelect: (item: RoomObjectItem) => void;
   nextRoomTitle?: string;
   onEnterRoom?: () => void;
+  onPlaceObject?: (item: RoomObjectItem, x: number, z: number) => void;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<AvatarRig | null>(null);
@@ -45,12 +47,16 @@ export function RoomExplorer3D({
   const itemsRef = useRef(items);
   const onSelectRef = useRef(onSelect);
   const onEnterRoomRef = useRef(onEnterRoom);
+  const onPlaceObjectRef = useRef(onPlaceObject);
   const transitioningRef = useRef(false);
   selectedRef.current = selectedId;
   itemsRef.current = items;
   onSelectRef.current = onSelect;
   onEnterRoomRef.current = onEnterRoom;
-  const itemSignature = items.map((item) => item.id).join('|');
+  onPlaceObjectRef.current = onPlaceObject;
+  const itemSignature = items
+    .map((item) => `${item.id}:${item.hotspot_x}:${item.hotspot_y}`)
+    .join('|');
 
   function moveCharacter(forward: number, sideways: number) {
     const avatar = avatarRef.current;
@@ -131,6 +137,7 @@ export function RoomExplorer3D({
     const markerMeshes: THREE.Mesh[] = [];
     const objectHitMeshes: THREE.Mesh[] = [];
     itemsRef.current.forEach((item, index) => {
+      if (Number(item.hotspot_x) < 0 || Number(item.hotspot_y) < 0) return;
       const marker = new THREE.Mesh(
         new THREE.RingGeometry(0.18, 0.3, 28),
         new THREE.MeshBasicMaterial({
@@ -179,6 +186,7 @@ export function RoomExplorer3D({
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     const keys = new Set<string>();
+    const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     let dragging = false;
     let moved = false;
     let lastX = 0;
@@ -259,6 +267,28 @@ export function RoomExplorer3D({
         18,
       );
     };
+    const dragOver = (event: DragEvent) => {
+      if (!onPlaceObjectRef.current) return;
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    };
+    const drop = (event: DragEvent) => {
+      event.preventDefault();
+      const itemId = event.dataTransfer?.getData('text/plain');
+      const item = itemsRef.current.find((entry) => entry.id === itemId);
+      if (!item || !onPlaceObjectRef.current) return;
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.set(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1,
+      );
+      raycaster.setFromCamera(pointer, camera);
+      const point = new THREE.Vector3();
+      if (!raycaster.ray.intersectPlane(floorPlane, point)) return;
+      const x = THREE.MathUtils.clamp((point.x / 10.4 + 0.5) * 100, 6, 94);
+      const z = THREE.MathUtils.clamp((point.z / 8.2 + 0.5) * 100, 8, 92);
+      onPlaceObjectRef.current(item, x, z);
+    };
     const keyDown = (event: KeyboardEvent) => {
       if (
         ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)
@@ -274,6 +304,8 @@ export function RoomExplorer3D({
     renderer.domElement.addEventListener('pointermove', pointerMove);
     renderer.domElement.addEventListener('pointerup', pointerUp);
     renderer.domElement.addEventListener('wheel', wheel, { passive: false });
+    renderer.domElement.addEventListener('dragover', dragOver);
+    renderer.domElement.addEventListener('drop', drop);
     window.addEventListener('keydown', keyDown);
     window.addEventListener('keyup', keyUp);
     resize();
@@ -326,6 +358,8 @@ export function RoomExplorer3D({
       renderer.domElement.removeEventListener('pointermove', pointerMove);
       renderer.domElement.removeEventListener('pointerup', pointerUp);
       renderer.domElement.removeEventListener('wheel', wheel);
+      renderer.domElement.removeEventListener('dragover', dragOver);
+      renderer.domElement.removeEventListener('drop', drop);
       scene.traverse((object) => {
         if (!(object instanceof THREE.Mesh)) return;
         object.geometry.dispose();
@@ -726,6 +760,7 @@ function buildDollhouse(
     ]);
     const plantNouns = new Set(['Pflanze', 'Baum', 'Blume', 'Blumentopf']);
     roomItems.forEach((item, index) => {
+      if (Number(item.hotspot_x) < 0 || Number(item.hotspot_y) < 0) return;
       const x = (Number(item.hotspot_x) / 100 - 0.5) * 10.4;
       const z = (Number(item.hotspot_y) / 100 - 0.5) * 8.2;
       const color = palette[index % palette.length];

@@ -38,7 +38,7 @@ import {
   type VerbGameItem,
 } from '@/lib/game-content';
 
-const APP_VERSION = '0.41.0';
+const APP_VERSION = '0.42.0';
 type GameKey = 'opposites' | 'verb_past' | 'prepositions' | 'room_objects';
 type VerbMode = 'forms' | 'sentences';
 type LevelMap = Record<GameKey, string[]>;
@@ -768,6 +768,39 @@ function RoomExplorer({
   const [selected, setSelected] = useState<RoomObjectItem | null>(null);
   const roomItems = explorerItems.filter((item) => item.room_key === roomKey);
   const room = roomItems[0];
+  const activeCustomRoom = customRooms.find(
+    (customRoom) => `custom-${customRoom.id}` === roomKey,
+  );
+  const pendingItems = activeCustomRoom
+    ? roomItems.filter(
+        (item) => Number(item.hotspot_x) < 0 || Number(item.hotspot_y) < 0,
+      )
+    : [];
+  const placedItems = activeCustomRoom
+    ? roomItems.filter(
+        (item) => Number(item.hotspot_x) >= 0 && Number(item.hotspot_y) >= 0,
+      )
+    : [];
+  const placeObject = (item: RoomObjectItem, x: number, z: number) => {
+    if (!activeCustomRoom) return;
+    const objectId = activeCustomRoom.objectIds.find(
+      (id) => `custom-${activeCustomRoom.id}-${id}` === item.id,
+    );
+    if (!objectId) return;
+    saveCustomRooms(
+      customRooms.map((customRoom) =>
+        customRoom.id === activeCustomRoom.id
+          ? {
+              ...customRoom,
+              placements: {
+                ...customRoom.placements,
+                [objectId]: { x, z },
+              },
+            }
+          : customRoom,
+      ),
+    );
+  };
   const currentRoomIndex = rooms.findIndex((item) => item.room_key === roomKey);
   const nextRoom =
     rooms.length > 1 ? rooms[(currentRoomIndex + 1) % rooms.length] : null;
@@ -828,8 +861,76 @@ function RoomExplorer({
             onEnterRoom={
               nextRoom ? () => setRoomKey(nextRoom.room_key) : undefined
             }
+            onPlaceObject={activeCustomRoom ? placeObject : undefined}
           />
-          <aside className="flex min-h-52 items-center justify-center rounded-3xl border bg-white p-6 text-center shadow-sm">
+          <aside className="flex min-h-52 flex-col items-center justify-start gap-5 rounded-3xl border bg-white p-5 text-center shadow-sm">
+            {pendingItems.length ? (
+              <div className="w-full rounded-2xl border-2 border-dashed border-[#7fa58b] bg-[#edf5ef] p-3 text-left">
+                <p className="text-xs font-black uppercase tracking-[.14em] text-[#286243]">
+                  Waiting to be placed
+                </p>
+                <p className="mt-1 text-xs text-[#637067]">
+                  Drag an object into the room.
+                </p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {pendingItems.map((item) => (
+                    <div
+                      key={item.id}
+                      draggable
+                      onDragStart={(event) => {
+                        event.dataTransfer.setData('text/plain', item.id);
+                        event.dataTransfer.effectAllowed = 'move';
+                      }}
+                      className="cursor-grab rounded-xl border bg-white p-2 shadow-sm active:cursor-grabbing"
+                      title={`Drag ${item.article} ${item.noun} into the room`}
+                    >
+                      <img
+                        src={item.image_url}
+                        alt=""
+                        className="aspect-[4/3] w-full rounded-lg object-cover"
+                      />
+                      <p className="mt-1 truncate text-center text-[11px] font-bold">
+                        {item.article} {item.noun}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : activeCustomRoom ? (
+              <div className="w-full rounded-xl bg-[#e7f1e9] px-3 py-2 text-xs font-bold text-[#286243]">
+                ✓ All selected objects are inside the room
+              </div>
+            ) : null}
+            {placedItems.length ? (
+              <div className="w-full text-left">
+                <p className="text-[10px] font-black uppercase tracking-[.14em] text-[#68776f]">
+                  Drag again to reposition
+                </p>
+                <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                  {placedItems.map((item) => (
+                    <div
+                      key={item.id}
+                      draggable
+                      onDragStart={(event) => {
+                        event.dataTransfer.setData('text/plain', item.id);
+                        event.dataTransfer.effectAllowed = 'move';
+                      }}
+                      className="w-16 shrink-0 cursor-grab rounded-lg border bg-white p-1 shadow-sm active:cursor-grabbing"
+                      title={`Move ${item.article} ${item.noun}`}
+                    >
+                      <img
+                        src={item.image_url}
+                        alt=""
+                        className="aspect-square w-full rounded-md object-cover"
+                      />
+                      <p className="truncate text-center text-[9px] font-bold">
+                        {item.noun}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             {selected ? (
               <div>
                 {selected.id.startsWith('custom-') ? (
@@ -875,6 +976,15 @@ function RoomExplorer({
         <HouseBuilder
           level={(level === 'A2' ? 'A2' : 'A1') as HouseLevel}
           rooms={customRooms}
+          builtInRooms={[
+            ...new Map(items.map((item) => [item.room_key, item])).values(),
+          ].map((builtInRoom) => ({
+            key: builtInRoom.room_key,
+            name: builtInRoom.room_title,
+            objectCount: items.filter(
+              (item) => item.room_key === builtInRoom.room_key,
+            ).length,
+          }))}
           onChange={saveCustomRooms}
           onClose={() => setBuilderOpen(false)}
         />
