@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
+import { RoomExplorer3D } from './room-explorer-3d';
 import {
   AUXILIARY_FORMS,
   FALLBACK_GAME_ITEMS,
@@ -35,7 +36,7 @@ import {
   type VerbGameItem,
 } from '@/lib/game-content';
 
-const APP_VERSION = '0.33.0';
+const APP_VERSION = '0.34.0';
 type GameKey = 'opposites' | 'verb_past' | 'prepositions' | 'room_objects';
 type VerbMode = 'forms' | 'sentences';
 type LevelMap = Record<GameKey, string[]>;
@@ -769,7 +770,7 @@ function RoomExplorer({
           </p>
           <h1 className="mt-1 text-3xl font-semibold">Select an object</h1>
           <p className="mt-1 text-sm text-[#718077]">
-            Tap the glowing areas to discover the German word and article.
+            Move through the room, look around, and select a glowing object.
           </p>
         </div>
         <div className="flex gap-2">
@@ -787,32 +788,12 @@ function RoomExplorer({
       </div>
       {room ? (
         <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
-          <div className="relative overflow-hidden rounded-3xl border-4 border-white bg-white shadow-xl">
-            <img
-              src={room.image_url}
-              alt={room.room_title}
-              className="block h-auto w-full"
-            />
-            {roomItems.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                aria-label={`Show ${item.article} ${item.noun}`}
-                onClick={() => setSelected(item)}
-                className={`absolute rounded-xl border-2 transition hover:bg-[#d9ff59]/35 focus:outline-none focus:ring-4 focus:ring-[#d9ff59]/70 ${selected?.id === item.id ? 'border-[#ff5a7a] bg-[#ff5a7a]/25' : 'border-[#d9ff59]/80 bg-[#d9ff59]/10'}`}
-                style={{
-                  left: `${item.hotspot_x}%`,
-                  top: `${item.hotspot_y}%`,
-                  width: `${item.hotspot_width}%`,
-                  height: `${item.hotspot_height}%`,
-                }}
-              >
-                <span className="sr-only">
-                  {item.article} {item.noun}
-                </span>
-              </button>
-            ))}
-          </div>
+          <RoomExplorer3D
+            room={room}
+            items={roomItems}
+            selectedId={selected?.id}
+            onSelect={setSelected}
+          />
           <aside className="flex min-h-52 items-center justify-center rounded-3xl border bg-white p-6 text-center shadow-sm">
             {selected ? (
               <div>
