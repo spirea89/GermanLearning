@@ -38,7 +38,7 @@ import {
   type VerbGameItem,
 } from '@/lib/game-content';
 
-const APP_VERSION = '0.40.0';
+const APP_VERSION = '0.41.0';
 type GameKey = 'opposites' | 'verb_past' | 'prepositions' | 'room_objects';
 type VerbMode = 'forms' | 'sentences';
 type LevelMap = Record<GameKey, string[]>;
@@ -832,7 +832,13 @@ function RoomExplorer({
           <aside className="flex min-h-52 items-center justify-center rounded-3xl border bg-white p-6 text-center shadow-sm">
             {selected ? (
               <div>
-                {selected.image_url ? (
+                {selected.id.startsWith('custom-') ? (
+                  <img
+                    src={selected.image_url}
+                    alt=""
+                    className="mx-auto size-40 rounded-3xl object-cover shadow-inner"
+                  />
+                ) : selected.image_url ? (
                   <ObjectCrop item={selected} />
                 ) : (
                   <div className="mx-auto grid size-40 place-items-center rounded-3xl bg-[#e4efe5] text-6xl shadow-inner">

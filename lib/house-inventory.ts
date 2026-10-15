@@ -21,7 +21,76 @@ export type UserHouseRoom = {
   roomType: string;
   level: HouseLevel;
   objectIds: string[];
+  placements?: Record<string, { x: number; z: number }>;
 };
+
+const OBJECT_SYMBOLS: Record<string, string> = {
+  door: '🚪',
+  mirror: '🪞',
+  'coat-rack': '🧥',
+  'shoe-cabinet': '👟',
+  sofa: '🛋️',
+  armchair: '🪑',
+  television: '📺',
+  bookshelf: '📚',
+  'coffee-table': '🪵',
+  rug: '🟫',
+  curtain: '🪟',
+  fridge: '🧊',
+  oven: '♨️',
+  sink: '🚰',
+  cupboard: '🗄️',
+  dishwasher: '🍽️',
+  microwave: '📻',
+  kettle: '🫖',
+  'dining-table': '🍽️',
+  chair: '🪑',
+  plate: '🍽️',
+  glass: '🥛',
+  cutlery: '🍴',
+  bed: '🛏️',
+  wardrobe: '👚',
+  'bedside-table': '🗄️',
+  pillow: '🛏️',
+  blanket: '🧶',
+  shower: '🚿',
+  bathtub: '🛁',
+  toilet: '🚽',
+  washbasin: '🚰',
+  towel: '🧖',
+  tap: '🚰',
+  'toy-box': '🧸',
+  toy: '🧸',
+  desk: '🖥️',
+  computer: '💻',
+  'office-chair': '🪑',
+  printer: '🖨️',
+  'washing-machine': '🫧',
+  dryer: '♨️',
+  'laundry-basket': '🧺',
+  'ironing-board': '👔',
+  shelf: '🗄️',
+  box: '📦',
+  tool: '🛠️',
+  bicycle: '🚲',
+  car: '🚗',
+  workbench: '🔧',
+  'flower-pot': '🪴',
+  plant: '🪴',
+  'garden-chair': '🪑',
+  'watering-can': '🚿',
+  tree: '🌳',
+  flower: '🌼',
+  lawnmower: '🌱',
+  window: '🪟',
+  lamp: '💡',
+};
+
+export function inventoryImage(id: string) {
+  const symbol = OBJECT_SYMBOLS[id] ?? '🏠';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="180" viewBox="0 0 240 180"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f7f1df"/><stop offset="1" stop-color="#cfe4d5"/></linearGradient></defs><rect width="240" height="180" rx="28" fill="url(#g)"/><ellipse cx="120" cy="147" rx="62" ry="12" fill="#274c3b" opacity=".13"/><text x="120" y="118" text-anchor="middle" font-size="84" font-family="Apple Color Emoji,Segoe UI Emoji,sans-serif">${symbol}</text></svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
 
 export const HOUSE_ROOM_TYPES: HouseRoomType[] = [
   { key: 'hallway', german: 'der Flur', english: 'Hallway' },

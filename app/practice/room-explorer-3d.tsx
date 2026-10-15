@@ -726,10 +726,8 @@ function buildDollhouse(
     ]);
     const plantNouns = new Set(['Pflanze', 'Baum', 'Blume', 'Blumentopf']);
     roomItems.forEach((item, index) => {
-      const column = index % 4;
-      const row = Math.floor(index / 4);
-      const x = -4.25 + column * 2.75;
-      const z = -3.55 + row * 2.35;
+      const x = (Number(item.hotspot_x) / 100 - 0.5) * 10.4;
+      const z = (Number(item.hotspot_y) / 100 - 0.5) * 8.2;
       const color = palette[index % palette.length];
       if (plantNouns.has(item.noun)) {
         addCylinder(0.3, 0.55, [x, 0.28, z], '#b66f43');
@@ -744,6 +742,69 @@ function buildDollhouse(
         item.noun === 'Gartenstuhl'
       ) {
         addChair(x, z);
+      } else if (item.noun === 'Bett') {
+        addBox([2.2, 0.42, 1.5], [x, 0.38, z], '#a96f4c');
+        addBox([2.05, 0.28, 1.35], [x, 0.72, z], '#edf0e8');
+        addBox([0.65, 0.18, 0.52], [x - 0.58, 0.94, z - 0.28], '#f7d6c8');
+        addBox([0.16, 1.15, 1.55], [x - 1.08, 0.68, z], '#81533d');
+      } else if (item.noun === 'Auto') {
+        addBox([2.25, 0.58, 1.15], [x, 0.55, z], '#d84f4b', 0.35);
+        addBox([1.2, 0.48, 0.96], [x - 0.15, 1.02, z], '#8ec4d8', 0.2);
+        for (const wheelX of [-0.72, 0.72])
+          for (const wheelZ of [-0.6, 0.6]) {
+            const wheel = addCylinder(
+              0.25,
+              0.16,
+              [x + wheelX, 0.32, z + wheelZ],
+              '#24282b',
+            );
+            wheel.rotation.x = Math.PI / 2;
+          }
+      } else if (item.noun === 'Fahrrad') {
+        for (const wheelX of [-0.62, 0.62]) {
+          const wheel = addTorus(0.42, 0.055, [x + wheelX, 0.52, z], '#30363b');
+          wheel.rotation.y = Math.PI / 2;
+        }
+        const frame = addBox([1.05, 0.08, 0.08], [x, 0.62, z], '#e67b42');
+        frame.rotation.z = -0.35;
+        addCylinder(0.04, 0.75, [x + 0.35, 0.86, z], '#e67b42').rotation.z =
+          -0.45;
+      } else if (item.noun === 'Badewanne' || item.noun === 'Dusche') {
+        addBox([2, 0.68, 1.15], [x, 0.42, z], '#e9f1f2');
+        addBox([1.6, 0.18, 0.78], [x, 0.72, z], '#99d2df', 0.3);
+        addTorus(0.25, 0.045, [x + 0.7, 1.08, z], '#c9d3d5').rotation.y =
+          Math.PI / 2;
+      } else if (item.noun === 'Toilette') {
+        addCylinder(0.44, 0.48, [x, 0.34, z], '#f3f5f2');
+        addTorus(0.36, 0.1, [x, 0.65, z], '#f3f5f2').rotation.x = Math.PI / 2;
+        addBox([0.78, 0.8, 0.38], [x, 0.72, z - 0.45], '#f3f5f2');
+      } else if (
+        ['Esstisch', 'Schreibtisch', 'Couchtisch', 'Werkbank'].includes(
+          item.noun,
+        )
+      ) {
+        addBox([2, 0.2, 1.1], [x, 0.85, z], color);
+        for (const legX of [-0.78, 0.78])
+          for (const legZ of [-0.38, 0.38])
+            addBox([0.12, 0.8, 0.12], [x + legX, 0.4, z + legZ], '#684938');
+      } else if (
+        [
+          'Kühlschrank',
+          'Waschmaschine',
+          'Trockner',
+          'Spülmaschine',
+          'Ofen',
+          'Mikrowelle',
+        ].includes(item.noun)
+      ) {
+        addBox([1.2, 1.55, 1], [x, 0.78, z], '#e7eceb', 0.35);
+        addBox([0.86, 0.7, 0.06], [x, 0.72, z + 0.51], '#283a42', 0.18);
+        addCylinder(
+          0.08,
+          0.08,
+          [x + 0.4, 1.3, z + 0.54],
+          '#65a9b9',
+        ).rotation.x = Math.PI / 2;
       } else if (largeNouns.has(item.noun)) {
         addBox([2, 0.85, 1.25], [x, 0.45, z], color);
         addBox(
