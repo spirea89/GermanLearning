@@ -88,7 +88,7 @@ const OBJECT_SYMBOLS: Record<string, string> = {
 
 export function inventoryImage(id: string) {
   const symbol = OBJECT_SYMBOLS[id] ?? '🏠';
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="180" viewBox="0 0 240 180"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f7f1df"/><stop offset="1" stop-color="#cfe4d5"/></linearGradient></defs><rect width="240" height="180" rx="28" fill="url(#g)"/><ellipse cx="120" cy="147" rx="62" ry="12" fill="#274c3b" opacity=".13"/><text x="120" y="118" text-anchor="middle" font-size="84" font-family="Apple Color Emoji,Segoe UI Emoji,sans-serif">${symbol}</text></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="180" viewBox="0 0 240 180"><ellipse cx="120" cy="148" rx="62" ry="12" fill="#274c3b" opacity=".18"/><text x="120" y="126" text-anchor="middle" font-size="96" font-family="Apple Color Emoji,Segoe UI Emoji,sans-serif">${symbol}</text></svg>`;
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
