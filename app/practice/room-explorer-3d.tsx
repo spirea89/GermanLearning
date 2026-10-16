@@ -21,6 +21,10 @@ type AvatarRig = THREE.Group & {
   };
 };
 type SceneObjectMap = Map<string, THREE.Vector3>;
+type DollhouseBuild = {
+  positions: SceneObjectMap;
+  movableModels: Map<string, THREE.Group>;
+};
 
 export function RoomExplorer3D({
   room,
@@ -123,7 +127,7 @@ export function RoomExplorer3D({
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     scene.add(sun);
-    const objectPositions = buildDollhouse(
+    const { positions: objectPositions, movableModels } = buildDollhouse(
       scene,
       room.room_key,
       itemsRef.current,
@@ -153,10 +157,12 @@ export function RoomExplorer3D({
         objectPositions.get(
           `${item.article} ${item.noun}`.toLocaleLowerCase('de'),
         ) ?? fallbackPosition(index);
+      const movableModel = movableModels.get(item.id);
       marker.position.copy(position);
       marker.rotation.x = -Math.PI / 2;
       marker.renderOrder = 8;
       marker.userData.item = item;
+      marker.userData.movableModel = movableModel;
       marker.userData.hitPixels = THREE.MathUtils.clamp(
         46 + Math.max(Number(item.hotspot_width), Number(item.hotspot_height)),
         62,
@@ -180,6 +186,8 @@ export function RoomExplorer3D({
       );
       objectHitArea.position.copy(position);
       objectHitArea.userData.item = item;
+      objectHitArea.userData.movableModel = movableModel;
+      objectHitArea.userData.marker = marker;
       scene.add(objectHitArea);
       objectHitMeshes.push(objectHitArea);
     });
@@ -190,8 +198,21 @@ export function RoomExplorer3D({
     const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     let dragging = false;
     let moved = false;
+    let draggedObject: {
+      item: RoomObjectItem;
+      model: THREE.Group;
+      marker: THREE.Mesh;
+      hitArea: THREE.Mesh;
+    } | null = null;
     let lastX = 0;
     let lastY = 0;
+    const setPointer = (event: { clientX: number; clientY: number }) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.set(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1,
+      );
+    };
     const resize = () => {
       const width = host.clientWidth;
       const height = Math.max(460, host.clientHeight);
@@ -205,12 +226,47 @@ export function RoomExplorer3D({
       lastX = event.clientX;
       lastY = event.clientY;
       renderer.domElement.setPointerCapture(event.pointerId);
+      if (onPlaceObjectRef.current) {
+        setPointer(event);
+        raycaster.setFromCamera(pointer, camera);
+        const hit = raycaster.intersectObjects(objectHitMeshes, false)[0];
+        const model = hit?.object.userData.movableModel as
+          | THREE.Group
+          | undefined;
+        const marker = hit?.object.userData.marker as THREE.Mesh | undefined;
+        const item = hit?.object.userData.item as RoomObjectItem | undefined;
+        if (model && marker && item)
+          draggedObject = {
+            item,
+            model,
+            marker,
+            hitArea: hit.object as THREE.Mesh,
+          };
+      }
     };
     const pointerMove = (event: PointerEvent) => {
       if (!dragging) return;
       const dx = event.clientX - lastX;
       const dy = event.clientY - lastY;
       if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
+      if (draggedObject) {
+        setPointer(event);
+        raycaster.setFromCamera(pointer, camera);
+        const point = new THREE.Vector3();
+        if (raycaster.ray.intersectPlane(floorPlane, point)) {
+          const x = THREE.MathUtils.clamp(point.x, -4.58, 4.58);
+          const z = THREE.MathUtils.clamp(point.z, -3.44, 3.44);
+          draggedObject.model.position.x = x;
+          draggedObject.model.position.z = z;
+          draggedObject.marker.position.x = x;
+          draggedObject.marker.position.z = z;
+          draggedObject.hitArea.position.x = x;
+          draggedObject.hitArea.position.z = z;
+        }
+        lastX = event.clientX;
+        lastY = event.clientY;
+        return;
+      }
       yawRef.current -= dx * 0.004;
       pitchRef.current = THREE.MathUtils.clamp(
         pitchRef.current + dy * 0.003,
@@ -223,12 +279,29 @@ export function RoomExplorer3D({
     const pointerUp = (event: PointerEvent) => {
       if (!dragging) return;
       dragging = false;
+      if (draggedObject) {
+        const current = draggedObject;
+        draggedObject = null;
+        if (moved && onPlaceObjectRef.current) {
+          const x = THREE.MathUtils.clamp(
+            (current.model.position.x / 10.4 + 0.5) * 100,
+            6,
+            94,
+          );
+          const z = THREE.MathUtils.clamp(
+            (current.model.position.z / 8.2 + 0.5) * 100,
+            8,
+            92,
+          );
+          onPlaceObjectRef.current(current.item, x, z);
+        } else {
+          onSelectRef.current(current.item);
+        }
+        return;
+      }
       if (moved) return;
       const rect = renderer.domElement.getBoundingClientRect();
-      pointer.set(
-        ((event.clientX - rect.left) / rect.width) * 2 - 1,
-        -((event.clientY - rect.top) / rect.height) * 2 + 1,
-      );
+      setPointer(event);
       raycaster.setFromCamera(pointer, camera);
       const hit = raycaster.intersectObjects(
         [...objectHitMeshes, ...markerMeshes],
@@ -384,7 +457,7 @@ export function RoomExplorer3D({
       <div className="pointer-events-none absolute left-4 top-4 rounded-2xl bg-black/60 px-4 py-3 text-xs font-semibold text-white backdrop-blur">
         <p>Explore the dollhouse · Drag to orbit the camera</p>
         <p className="mt-1 text-white/70">
-          Arrows or WASD · Scroll to zoom · Click glowing objects
+          Arrows or WASD · Click for details · Drag furniture to move it
         </p>
       </div>
       {nextRoomTitle ? (
@@ -419,8 +492,9 @@ function buildDollhouse(
   scene: THREE.Scene,
   roomKey: string,
   roomItems: RoomObjectItem[],
-): SceneObjectMap {
+): DollhouseBuild {
   const positions = new Map<string, THREE.Vector3>();
+  const movableModels = new Map<string, THREE.Group>();
   const mark = (names: string[], x: number, y: number, z: number) =>
     names.forEach((name) =>
       positions.set(name.toLocaleLowerCase('de'), new THREE.Vector3(x, y, z)),
@@ -772,6 +846,7 @@ function buildDollhouse(
       const model = createHouseObjectModel(item.inventory_id ?? 'box');
       model.group.position.set(x, 0.02, z);
       scene.add(model.group);
+      movableModels.set(item.id, model.group);
       mark(
         [`${item.article} ${item.noun}`],
         x,
@@ -877,7 +952,7 @@ function buildDollhouse(
       );
     });
   }
-  return positions;
+  return { positions, movableModels };
 }
 
 function fallbackPosition(index: number) {

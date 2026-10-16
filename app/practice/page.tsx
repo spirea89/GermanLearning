@@ -39,7 +39,7 @@ import {
   type VerbGameItem,
 } from '@/lib/game-content';
 
-const APP_VERSION = '0.44.0';
+const APP_VERSION = '0.45.0';
 type GameKey = 'opposites' | 'verb_past' | 'prepositions' | 'room_objects';
 type VerbMode = 'forms' | 'sentences';
 type LevelMap = Record<GameKey, string[]>;
@@ -777,11 +777,6 @@ function RoomExplorer({
         (item) => Number(item.hotspot_x) < 0 || Number(item.hotspot_y) < 0,
       )
     : [];
-  const placedItems = activeCustomRoom
-    ? roomItems.filter(
-        (item) => Number(item.hotspot_x) >= 0 && Number(item.hotspot_y) >= 0,
-      )
-    : [];
   const placeObject = (item: RoomObjectItem, x: number, z: number) => {
     if (!activeCustomRoom) return;
     const objectId = activeCustomRoom.objectIds.find(
@@ -901,37 +896,6 @@ function RoomExplorer({
             ) : activeCustomRoom ? (
               <div className="w-full rounded-xl bg-[#e7f1e9] px-3 py-2 text-xs font-bold text-[#286243]">
                 ✓ All selected objects are inside the room
-              </div>
-            ) : null}
-            {placedItems.length ? (
-              <div className="w-full text-left">
-                <p className="text-[10px] font-black uppercase tracking-[.14em] text-[#68776f]">
-                  Drag again to reposition
-                </p>
-                <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                  {placedItems.map((item) => (
-                    <div
-                      key={item.id}
-                      draggable
-                      onDragStart={(event) => {
-                        event.dataTransfer.setData('text/plain', item.id);
-                        event.dataTransfer.effectAllowed = 'move';
-                      }}
-                      className="w-16 shrink-0 cursor-grab rounded-lg border bg-white p-1 shadow-sm active:cursor-grabbing"
-                      title={`Move ${item.article} ${item.noun}`}
-                    >
-                      <div className="aspect-square w-full">
-                        <InventoryObjectPreview
-                          id={item.inventory_id ?? ''}
-                          compact
-                        />
-                      </div>
-                      <p className="truncate text-center text-[9px] font-bold">
-                        {item.noun}
-                      </p>
-                    </div>
-                  ))}
-                </div>
               </div>
             ) : null}
             {selected ? (
