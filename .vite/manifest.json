@@ -1,0 +1,314 @@
+{
+  "_arrow-left-BvYfsF1C.js": {
+    "file": "GermanLearning/_next/static/chunks/arrow-left-BvYfsF1C.js",
+    "name": "arrow-left",
+    "imports": [
+      "_createLucideIcon-IdZg2-hv.js"
+    ]
+  },
+  "_arrow-right-DvPY5omI.js": {
+    "file": "GermanLearning/_next/static/chunks/arrow-right-DvPY5omI.js",
+    "name": "arrow-right",
+    "imports": [
+      "_createLucideIcon-IdZg2-hv.js"
+    ]
+  },
+  "_book-open-3LNSIRxh.js": {
+    "file": "GermanLearning/_next/static/chunks/book-open-3LNSIRxh.js",
+    "name": "book-open",
+    "imports": [
+      "_createLucideIcon-IdZg2-hv.js"
+    ]
+  },
+  "_createLucideIcon-IdZg2-hv.js": {
+    "file": "GermanLearning/_next/static/chunks/createLucideIcon-IdZg2-hv.js",
+    "name": "createLucideIcon",
+    "imports": [
+      "_rolldown-runtime-CBtvYLit.js",
+      "_framework-CjrFCyX1.js"
+    ]
+  },
+  "_dialog-DohOnwIa.js": {
+    "file": "GermanLearning/_next/static/chunks/dialog-DohOnwIa.js",
+    "name": "dialog",
+    "imports": [
+      "_rolldown-runtime-CBtvYLit.js",
+      "_supabase-20s_1ri_.js",
+      "_createLucideIcon-IdZg2-hv.js",
+      "_x-Bkttw1fh.js",
+      "_framework-CjrFCyX1.js"
+    ]
+  },
+  "_framework-CjrFCyX1.js": {
+    "file": "GermanLearning/_next/static/chunks/framework-CjrFCyX1.js",
+    "name": "framework",
+    "imports": [
+      "_rolldown-runtime-CBtvYLit.js"
+    ]
+  },
+  "_game-content-L-GJKX9x.js": {
+    "file": "GermanLearning/_next/static/chunks/game-content-L-GJKX9x.js",
+    "name": "game-content"
+  },
+  "_gamepad-2-CC38n6bC.js": {
+    "file": "GermanLearning/_next/static/chunks/gamepad-2-CC38n6bC.js",
+    "name": "gamepad-2",
+    "imports": [
+      "_createLucideIcon-IdZg2-hv.js"
+    ]
+  },
+  "_log-in-Cvf9kx1p.js": {
+    "file": "GermanLearning/_next/static/chunks/log-in-Cvf9kx1p.js",
+    "name": "log-in",
+    "imports": [
+      "_createLucideIcon-IdZg2-hv.js"
+    ]
+  },
+  "_log-out-BqRrIxq1.js": {
+    "file": "GermanLearning/_next/static/chunks/log-out-BqRrIxq1.js",
+    "name": "log-out",
+    "imports": [
+      "_createLucideIcon-IdZg2-hv.js"
+    ]
+  },
+  "_rolldown-runtime-CBtvYLit.js": {
+    "file": "GermanLearning/_next/static/chunks/rolldown-runtime-CBtvYLit.js",
+    "name": "rolldown-runtime"
+  },
+  "_settings-DFHXy960.js": {
+    "file": "GermanLearning/_next/static/chunks/settings-DFHXy960.js",
+    "name": "settings",
+    "imports": [
+      "_createLucideIcon-IdZg2-hv.js"
+    ]
+  },
+  "_sparkles-CXgVXJeO.js": {
+    "file": "GermanLearning/_next/static/chunks/sparkles-CXgVXJeO.js",
+    "name": "sparkles",
+    "imports": [
+      "_createLucideIcon-IdZg2-hv.js"
+    ]
+  },
+  "_supabase-20s_1ri_.js": {
+    "file": "GermanLearning/_next/static/chunks/supabase-20s_1ri_.js",
+    "name": "supabase",
+    "imports": [
+      "_rolldown-runtime-CBtvYLit.js",
+      "_framework-CjrFCyX1.js"
+    ]
+  },
+  "_swords-Icl28yW5.js": {
+    "file": "GermanLearning/_next/static/chunks/swords-Icl28yW5.js",
+    "name": "swords",
+    "imports": [
+      "_createLucideIcon-IdZg2-hv.js"
+    ]
+  },
+  "_trophy-B9mEera_.js": {
+    "file": "GermanLearning/_next/static/chunks/trophy-B9mEera_.js",
+    "name": "trophy",
+    "imports": [
+      "_createLucideIcon-IdZg2-hv.js"
+    ]
+  },
+  "_username-auth-B1fy9BC_.js": {
+    "file": "GermanLearning/_next/static/chunks/username-auth-B1fy9BC_.js",
+    "name": "username-auth",
+    "imports": [
+      "_supabase-20s_1ri_.js"
+    ]
+  },
+  "_users-DH1JLPlP.js": {
+    "file": "GermanLearning/_next/static/chunks/users-DH1JLPlP.js",
+    "name": "users",
+    "imports": [
+      "_createLucideIcon-IdZg2-hv.js"
+    ]
+  },
+  "_x-Bkttw1fh.js": {
+    "file": "GermanLearning/_next/static/chunks/x-Bkttw1fh.js",
+    "name": "x",
+    "imports": [
+      "_createLucideIcon-IdZg2-hv.js"
+    ]
+  },
+  "app/admin/page.tsx": {
+    "file": "GermanLearning/_next/static/chunks/page-jzlvjUkN.js",
+    "name": "page",
+    "src": "app/admin/page.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_rolldown-runtime-CBtvYLit.js",
+      "_supabase-20s_1ri_.js",
+      "_dialog-DohOnwIa.js",
+      "_game-content-L-GJKX9x.js",
+      "_createLucideIcon-IdZg2-hv.js",
+      "_arrow-left-BvYfsF1C.js",
+      "_book-open-3LNSIRxh.js",
+      "_x-Bkttw1fh.js",
+      "_gamepad-2-CC38n6bC.js",
+      "_log-in-Cvf9kx1p.js",
+      "_framework-CjrFCyX1.js"
+    ]
+  },
+  "app/contest/page.tsx": {
+    "file": "GermanLearning/_next/static/chunks/page-B0tPlVGX.js",
+    "name": "page",
+    "src": "app/contest/page.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_rolldown-runtime-CBtvYLit.js",
+      "_supabase-20s_1ri_.js",
+      "_username-auth-B1fy9BC_.js",
+      "_createLucideIcon-IdZg2-hv.js",
+      "_arrow-left-BvYfsF1C.js",
+      "_swords-Icl28yW5.js",
+      "_x-Bkttw1fh.js",
+      "_settings-DFHXy960.js",
+      "_log-in-Cvf9kx1p.js",
+      "_users-DH1JLPlP.js",
+      "_trophy-B9mEera_.js",
+      "_framework-CjrFCyX1.js"
+    ]
+  },
+  "app/page.tsx": {
+    "file": "GermanLearning/_next/static/chunks/page-BuLzqLIA.js",
+    "name": "page",
+    "src": "app/page.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_rolldown-runtime-CBtvYLit.js",
+      "_supabase-20s_1ri_.js",
+      "_username-auth-B1fy9BC_.js",
+      "_createLucideIcon-IdZg2-hv.js",
+      "_arrow-right-DvPY5omI.js",
+      "_swords-Icl28yW5.js",
+      "_gamepad-2-CC38n6bC.js",
+      "_log-in-Cvf9kx1p.js",
+      "_log-out-BqRrIxq1.js",
+      "_users-DH1JLPlP.js",
+      "_sparkles-CXgVXJeO.js",
+      "_trophy-B9mEera_.js",
+      "_framework-CjrFCyX1.js"
+    ]
+  },
+  "app/plan/page.tsx": {
+    "file": "GermanLearning/_next/static/chunks/page-HptON_SL.js",
+    "name": "page",
+    "src": "app/plan/page.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_rolldown-runtime-CBtvYLit.js",
+      "_supabase-20s_1ri_.js",
+      "_dialog-DohOnwIa.js",
+      "_username-auth-B1fy9BC_.js",
+      "_createLucideIcon-IdZg2-hv.js",
+      "_book-open-3LNSIRxh.js",
+      "_swords-Icl28yW5.js",
+      "_x-Bkttw1fh.js",
+      "_settings-DFHXy960.js",
+      "_log-in-Cvf9kx1p.js",
+      "_log-out-BqRrIxq1.js",
+      "_sparkles-CXgVXJeO.js",
+      "_framework-CjrFCyX1.js"
+    ]
+  },
+  "app/practice/page.tsx": {
+    "file": "GermanLearning/_next/static/chunks/page-g_W4yHHs.js",
+    "name": "page",
+    "src": "app/practice/page.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_rolldown-runtime-CBtvYLit.js",
+      "_supabase-20s_1ri_.js",
+      "_game-content-L-GJKX9x.js",
+      "_createLucideIcon-IdZg2-hv.js",
+      "_arrow-left-BvYfsF1C.js",
+      "_arrow-right-DvPY5omI.js",
+      "_book-open-3LNSIRxh.js",
+      "_x-Bkttw1fh.js",
+      "_settings-DFHXy960.js",
+      "_gamepad-2-CC38n6bC.js",
+      "_sparkles-CXgVXJeO.js",
+      "_trophy-B9mEera_.js",
+      "_framework-CjrFCyX1.js"
+    ]
+  },
+  "components/mobile-nav.tsx": {
+    "file": "GermanLearning/_next/static/chunks/mobile-nav-CR7CCh5V.js",
+    "name": "mobile-nav",
+    "src": "components/mobile-nav.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_rolldown-runtime-CBtvYLit.js",
+      "_swords-Icl28yW5.js",
+      "_gamepad-2-CC38n6bC.js",
+      "_framework-CjrFCyX1.js"
+    ]
+  },
+  "components/theme-switcher.tsx": {
+    "file": "GermanLearning/_next/static/chunks/theme-switcher-Brt2DTKj.js",
+    "name": "theme-switcher",
+    "src": "components/theme-switcher.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_rolldown-runtime-CBtvYLit.js",
+      "_createLucideIcon-IdZg2-hv.js",
+      "_gamepad-2-CC38n6bC.js",
+      "_framework-CjrFCyX1.js"
+    ]
+  },
+  "node_modules/.pnpm/vinext@1.0.0-beta.5_@vitejs+plugin-react@6.0.2_vite@8.0.13_@types+node@22.19.19_esbuild_b79f96eac0df69dff29a3f5c3c8024f5/node_modules/vinext/dist/shims/internal/app-route-prefetch-policy.js": {
+    "file": "GermanLearning/_next/static/chunks/app-route-prefetch-policy-CK1-Le5i.js",
+    "name": "app-route-prefetch-policy",
+    "src": "node_modules/.pnpm/vinext@1.0.0-beta.5_@vitejs+plugin-react@6.0.2_vite@8.0.13_@types+node@22.19.19_esbuild_b79f96eac0df69dff29a3f5c3c8024f5/node_modules/vinext/dist/shims/internal/app-route-prefetch-policy.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "virtual:vinext-app-browser-entry"
+    ]
+  },
+  "node_modules/.pnpm/vinext@1.0.0-beta.5_@vitejs+plugin-react@6.0.2_vite@8.0.13_@types+node@22.19.19_esbuild_b79f96eac0df69dff29a3f5c3c8024f5/node_modules/vinext/dist/shims/layout-segment-context.js": {
+    "file": "GermanLearning/_next/static/chunks/layout-segment-context-OzTu8m2m.js",
+    "name": "layout-segment-context",
+    "src": "node_modules/.pnpm/vinext@1.0.0-beta.5_@vitejs+plugin-react@6.0.2_vite@8.0.13_@types+node@22.19.19_esbuild_b79f96eac0df69dff29a3f5c3c8024f5/node_modules/vinext/dist/shims/layout-segment-context.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_rolldown-runtime-CBtvYLit.js",
+      "virtual:vinext-app-browser-entry",
+      "_framework-CjrFCyX1.js"
+    ]
+  },
+  "node_modules/.pnpm/vinext@1.0.0-beta.5_@vitejs+plugin-react@6.0.2_vite@8.0.13_@types+node@22.19.19_esbuild_b79f96eac0df69dff29a3f5c3c8024f5/node_modules/vinext/dist/shims/streamed-icons.js": {
+    "file": "GermanLearning/_next/static/chunks/streamed-icons-B7oEzrFO.js",
+    "name": "streamed-icons",
+    "src": "node_modules/.pnpm/vinext@1.0.0-beta.5_@vitejs+plugin-react@6.0.2_vite@8.0.13_@types+node@22.19.19_esbuild_b79f96eac0df69dff29a3f5c3c8024f5/node_modules/vinext/dist/shims/streamed-icons.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_rolldown-runtime-CBtvYLit.js",
+      "_framework-CjrFCyX1.js"
+    ]
+  },
+  "virtual:vinext-app-browser-entry": {
+    "file": "GermanLearning/_next/static/chunks/index-DaUjr096.js",
+    "name": "index",
+    "src": "virtual:vinext-app-browser-entry",
+    "isEntry": true,
+    "imports": [
+      "_rolldown-runtime-CBtvYLit.js",
+      "_framework-CjrFCyX1.js"
+    ],
+    "dynamicImports": [
+      "node_modules/.pnpm/vinext@1.0.0-beta.5_@vitejs+plugin-react@6.0.2_vite@8.0.13_@types+node@22.19.19_esbuild_b79f96eac0df69dff29a3f5c3c8024f5/node_modules/vinext/dist/shims/internal/app-route-prefetch-policy.js",
+      "virtual:vinext-app-browser-entry",
+      "app/practice/page.tsx",
+      "app/page.tsx",
+      "components/theme-switcher.tsx",
+      "node_modules/.pnpm/vinext@1.0.0-beta.5_@vitejs+plugin-react@6.0.2_vite@8.0.13_@types+node@22.19.19_esbuild_b79f96eac0df69dff29a3f5c3c8024f5/node_modules/vinext/dist/shims/layout-segment-context.js",
+      "app/admin/page.tsx",
+      "app/contest/page.tsx",
+      "node_modules/.pnpm/vinext@1.0.0-beta.5_@vitejs+plugin-react@6.0.2_vite@8.0.13_@types+node@22.19.19_esbuild_b79f96eac0df69dff29a3f5c3c8024f5/node_modules/vinext/dist/shims/streamed-icons.js",
+      "components/mobile-nav.tsx",
+      "app/plan/page.tsx"
+    ]
+  }
+}
