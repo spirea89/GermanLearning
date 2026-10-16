@@ -48,6 +48,7 @@ export type PrepositionGameItem = {
 
 export type RoomObjectItem = {
   id: string;
+  inventory_id?: string;
   level: string;
   room_key: string;
   room_title: string;

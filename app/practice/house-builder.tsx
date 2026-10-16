@@ -10,6 +10,7 @@ import {
   type HouseLevel,
   type UserHouseRoom,
 } from '@/lib/house-inventory';
+import { InventoryObjectPreview } from './inventory-object-preview';
 
 export function HouseBuilder({
   level,
@@ -255,11 +256,9 @@ export function HouseBuilder({
                         }
                         className={`rounded-xl border p-3 text-left transition ${selected ? 'border-[#1f6f4a] bg-[#dcebdd] ring-1 ring-[#1f6f4a]' : 'border-[#ddd5c8] bg-white hover:border-[#80a98f]'}`}
                       >
-                        <img
-                          src={inventoryImage(inventoryItem.id)}
-                          alt=""
-                          className="mb-3 h-24 w-full rounded-lg object-cover"
-                        />
+                        <div className="mb-3">
+                          <InventoryObjectPreview id={inventoryItem.id} />
+                        </div>
                         <span className="font-bold">
                           <span
                             className={
@@ -318,6 +317,7 @@ export function customRoomsToItems(rooms: UserHouseRoom[]) {
       return [
         {
           id: `custom-${room.id}-${objectId}`,
+          inventory_id: objectId,
           level: room.level,
           room_key: `custom-${room.id}`,
           room_title: room.name,

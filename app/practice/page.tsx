@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 import { RoomExplorer3D } from './room-explorer-3d';
 import { HouseBuilder, customRoomsToItems } from './house-builder';
+import { InventoryObjectPreview } from './inventory-object-preview';
 import type { HouseLevel, UserHouseRoom } from '@/lib/house-inventory';
 import {
   AUXILIARY_FORMS,
@@ -38,7 +39,7 @@ import {
   type VerbGameItem,
 } from '@/lib/game-content';
 
-const APP_VERSION = '0.43.0';
+const APP_VERSION = '0.44.0';
 type GameKey = 'opposites' | 'verb_past' | 'prepositions' | 'room_objects';
 type VerbMode = 'forms' | 'sentences';
 type LevelMap = Record<GameKey, string[]>;
@@ -884,11 +885,12 @@ function RoomExplorer({
                       className="cursor-grab rounded-xl border bg-white p-2 shadow-sm active:cursor-grabbing"
                       title={`Drag ${item.article} ${item.noun} into the room`}
                     >
-                      <img
-                        src={item.image_url}
-                        alt=""
-                        className="aspect-[4/3] w-full rounded-lg object-cover"
-                      />
+                      <div className="aspect-[4/3] w-full">
+                        <InventoryObjectPreview
+                          id={item.inventory_id ?? ''}
+                          compact
+                        />
+                      </div>
                       <p className="mt-1 truncate text-center text-[11px] font-bold">
                         {item.article} {item.noun}
                       </p>
@@ -918,11 +920,12 @@ function RoomExplorer({
                       className="w-16 shrink-0 cursor-grab rounded-lg border bg-white p-1 shadow-sm active:cursor-grabbing"
                       title={`Move ${item.article} ${item.noun}`}
                     >
-                      <img
-                        src={item.image_url}
-                        alt=""
-                        className="aspect-square w-full rounded-md object-cover"
-                      />
+                      <div className="aspect-square w-full">
+                        <InventoryObjectPreview
+                          id={item.inventory_id ?? ''}
+                          compact
+                        />
+                      </div>
                       <p className="truncate text-center text-[9px] font-bold">
                         {item.noun}
                       </p>
@@ -934,11 +937,12 @@ function RoomExplorer({
             {selected ? (
               <div>
                 {selected.id.startsWith('custom-') ? (
-                  <img
-                    src={selected.image_url}
-                    alt=""
-                    className="mx-auto size-40 rounded-3xl object-cover shadow-inner"
-                  />
+                  <div className="mx-auto size-40 rounded-3xl bg-[#e4efe5] p-2 shadow-inner">
+                    <InventoryObjectPreview
+                      id={selected.inventory_id ?? ''}
+                      compact
+                    />
+                  </div>
                 ) : selected.image_url ? (
                   <ObjectCrop item={selected} />
                 ) : (

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import * as THREE from 'three';
 import type { RoomObjectItem } from '@/lib/game-content';
+import { createHouseObjectModel } from '@/lib/house-3d-models';
 
 type AvatarRig = THREE.Group & {
   userData: {
@@ -768,33 +769,15 @@ function buildDollhouse(
       const x = (Number(item.hotspot_x) / 100 - 0.5) * 10.4;
       const z = (Number(item.hotspot_y) / 100 - 0.5) * 8.2;
       const color = palette[index % palette.length];
-      const texture = new THREE.TextureLoader().load(item.image_url);
-      texture.colorSpace = THREE.SRGBColorSpace;
-      const sprite = new THREE.Sprite(
-        new THREE.SpriteMaterial({
-          map: texture,
-          transparent: true,
-          depthWrite: false,
-        }),
+      const model = createHouseObjectModel(item.inventory_id ?? 'box');
+      model.group.position.set(x, 0.02, z);
+      scene.add(model.group);
+      mark(
+        [`${item.article} ${item.noun}`],
+        x,
+        Math.max(0.45, model.height + 0.2),
+        z,
       );
-      const large = largeNouns.has(item.noun);
-      sprite.position.set(x, large ? 1.05 : 0.88, z);
-      sprite.scale.set(large ? 2.45 : 1.85, large ? 1.84 : 1.39, 1);
-      sprite.renderOrder = 2;
-      scene.add(sprite);
-      const shadow = new THREE.Mesh(
-        new THREE.CircleGeometry(large ? 0.9 : 0.62, 28),
-        new THREE.MeshBasicMaterial({
-          color: '#24382e',
-          transparent: true,
-          opacity: 0.16,
-          depthWrite: false,
-        }),
-      );
-      shadow.rotation.x = -Math.PI / 2;
-      shadow.position.set(x, 0.04, z);
-      scene.add(shadow);
-      mark([`${item.article} ${item.noun}`], x, large ? 1.6 : 1.35, z);
       return;
       if (plantNouns.has(item.noun)) {
         addCylinder(0.3, 0.55, [x, 0.28, z], '#b66f43');
