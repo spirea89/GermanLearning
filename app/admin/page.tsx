@@ -39,8 +39,9 @@ import type {
 import { VerbsPanel } from './verbs-panel';
 import { PrepositionsPanel } from './prepositions-panel';
 import { ObjectsPanel } from './objects-panel';
+import { BulkLevelMover, SelectionCheckbox } from './bulk-level-mover';
 
-const APP_VERSION = '0.46.0';
+const APP_VERSION = '0.47.0';
 const EMPTY_FORM = {
   phrase_before: '',
   target_word: '',
@@ -80,6 +81,7 @@ export default function AdminPage() {
   const [verbs, setVerbs] = useState<VerbGameItem[]>([]);
   const [prepositions, setPrepositions] = useState<PrepositionGameItem[]>([]);
   const [roomObjects, setRoomObjects] = useState<RoomObjectItem[]>([]);
+  const [selectedOppositeIds, setSelectedOppositeIds] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -158,6 +160,7 @@ export default function AdminPage() {
     void load(user, nextContentLevel);
     setMessage('');
     setLevelMessage('');
+    setSelectedOppositeIds([]);
   }
   async function saveGameLevels() {
     if (!selectedGame || !gameLevels.length) {
@@ -566,6 +569,7 @@ export default function AdminPage() {
                     onClick={() => {
                       setContentLevel(level);
                       setMessage('');
+                      setSelectedOppositeIds([]);
                       void load(user, level);
                     }}
                     className={`rounded-xl border px-4 py-2 text-sm font-semibold ${contentLevel === level ? 'border-[#1f6f4a] bg-[#1f6f4a] text-white' : 'border-[#d6ddd5] bg-white text-[#59665e]'}`}
@@ -604,13 +608,34 @@ export default function AdminPage() {
               />
             ) : (
               <>
+                <BulkLevelMover
+                  table="game_content"
+                  currentLevel={contentLevel}
+                  selectedIds={selectedOppositeIds}
+                  onMoved={async () => {
+                    setSelectedOppositeIds([]);
+                    await load(user, contentLevel);
+                  }}
+                />
                 {message && (
                   <p className="mb-4 rounded-xl border border-[#cfe2d4] bg-[#eff7f1] p-3 text-sm text-[#336848]">
                     {message}
                   </p>
                 )}
                 <div className="overflow-hidden rounded-2xl border border-[#dce3d9] bg-white">
-                  <div className="grid grid-cols-[1fr_130px_80px] gap-4 border-b border-[#e5eae4] bg-[#f8faf7] px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#748078]">
+                  <div className="grid grid-cols-[24px_1fr_130px_52px] items-center gap-4 border-b border-[#e5eae4] bg-[#f8faf7] px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#748078]">
+                    <SelectionCheckbox
+                      checked={
+                        !!items.length &&
+                        selectedOppositeIds.length === items.length
+                      }
+                      onChange={(checked) =>
+                        setSelectedOppositeIds(
+                          checked ? items.map((item) => item.id) : [],
+                        )
+                      }
+                      label="Select all questions"
+                    />
                     <span>Sentence and answer</span>
                     <span>Status</span>
                     <span />
@@ -622,11 +647,21 @@ export default function AdminPage() {
                     </p>
                   )}
                   {items.map((item) => (
-                    <button
+                    <div
                       key={item.id}
-                      onClick={() => openEdit(item)}
-                      className="grid w-full grid-cols-[1fr_130px_80px] items-center gap-4 border-b border-[#edf0ec] px-5 py-4 text-left last:border-0 hover:bg-[#f8faf7]"
+                      className="grid w-full grid-cols-[24px_1fr_130px_52px] items-center gap-4 border-b border-[#edf0ec] px-5 py-4 text-left last:border-0 hover:bg-[#f8faf7]"
                     >
+                      <SelectionCheckbox
+                        checked={selectedOppositeIds.includes(item.id)}
+                        onChange={(checked) =>
+                          setSelectedOppositeIds((current) =>
+                            checked
+                              ? [...current, item.id]
+                              : current.filter((id) => id !== item.id),
+                          )
+                        }
+                        label={`Select ${item.target_word}`}
+                      />
                       <span>
                         <span className="block text-sm font-medium">
                           {item.phrase_before}
@@ -644,11 +679,15 @@ export default function AdminPage() {
                       >
                         {item.active ? 'Active' : 'Hidden'}
                       </span>
-                      <Pencil
-                        size={16}
-                        className="justify-self-end text-[#718077]"
-                      />
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => openEdit(item)}
+                        aria-label={`Edit ${item.target_word}`}
+                        className="grid size-9 place-items-center justify-self-end rounded-lg text-[#718077] hover:bg-[#edf3ec]"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                    </div>
                   ))}
                 </div>
                 <p className="mt-3 text-xs text-[#7c8880]">

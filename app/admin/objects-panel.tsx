@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Download, Pencil, Plus, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,6 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 import type { RoomObjectItem } from '@/lib/game-content';
+import { BulkLevelMover, SelectionCheckbox } from './bulk-level-mover';
 
 const HEADER =
   'room_key\troom_title\tarticle\tnoun\tenglish_translation\timage_url\tbattle_image_url\tbattle_crop_x\tbattle_crop_y\tbattle_crop_width\tbattle_crop_height\thotspot_x\thotspot_y\thotspot_width\thotspot_height\tactive\tsort_order';
@@ -49,8 +50,10 @@ export function ObjectsPanel({
   const [open, setOpen] = useState(false),
     [editingId, setEditingId] = useState<string | null>(null),
     [form, setForm] = useState(EMPTY),
-    [message, setMessage] = useState('');
+    [message, setMessage] = useState(''),
+    [selectedIds, setSelectedIds] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
+  useEffect(() => setSelectedIds([]), [level]);
   function edit(item?: RoomObjectItem) {
     setEditingId(item?.id ?? null);
     setForm(
@@ -259,18 +262,49 @@ export function ObjectsPanel({
           {message}
         </p>
       )}
+      <BulkLevelMover
+        table="room_object_content"
+        currentLevel={level}
+        selectedIds={selectedIds}
+        onMoved={async () => {
+          setSelectedIds([]);
+          await reload();
+        }}
+      />
       <div className="mt-5 overflow-hidden rounded-2xl border bg-white">
+        {!!items.length && (
+          <div className="flex items-center gap-3 border-b bg-[#f8faf7] px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#748078]">
+            <SelectionCheckbox
+              checked={selectedIds.length === items.length}
+              onChange={(checked) =>
+                setSelectedIds(checked ? items.map((item) => item.id) : [])
+              }
+              label="Select all room objects"
+            />
+            Select all {level} objects
+          </div>
+        )}
         {!items.length && (
           <p className="px-5 py-8 text-center text-sm text-[#718077]">
             No {level} objects yet.
           </p>
         )}
         {items.map((item) => (
-          <button
+          <div
             key={item.id}
-            onClick={() => edit(item)}
-            className="grid w-full grid-cols-[90px_1fr_40px] items-center gap-4 border-b px-5 py-3 text-left last:border-0 hover:bg-[#f8faf7]"
+            className="grid w-full grid-cols-[24px_90px_1fr_40px] items-center gap-4 border-b px-5 py-3 text-left last:border-0 hover:bg-[#f8faf7]"
           >
+            <SelectionCheckbox
+              checked={selectedIds.includes(item.id)}
+              onChange={(checked) =>
+                setSelectedIds((current) =>
+                  checked
+                    ? [...current, item.id]
+                    : current.filter((id) => id !== item.id),
+                )
+              }
+              label={`Select ${item.article} ${item.noun}`}
+            />
             <ObjectCrop item={item} />
             <span>
               <strong>
@@ -280,8 +314,15 @@ export function ObjectsPanel({
                 {item.room_title} · {item.english_translation}
               </span>
             </span>
-            <Pencil size={16} />
-          </button>
+            <button
+              type="button"
+              onClick={() => edit(item)}
+              aria-label={`Edit ${item.article} ${item.noun}`}
+              className="grid size-9 place-items-center rounded-lg text-[#718077] hover:bg-[#edf3ec]"
+            >
+              <Pencil size={16} />
+            </button>
+          </div>
         ))}
       </div>
       <Dialog open={open} onOpenChange={setOpen}>

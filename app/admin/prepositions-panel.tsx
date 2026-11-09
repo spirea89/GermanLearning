@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Download, Pencil, Plus, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,6 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 import type { PrepositionGameItem } from '@/lib/game-content';
+import { BulkLevelMover, SelectionCheckbox } from './bulk-level-mover';
 
 const EMPTY: Omit<PrepositionGameItem, 'id' | 'level'> = {
   prompt: '___ ',
@@ -39,7 +40,9 @@ export function PrepositionsPanel({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY);
   const [message, setMessage] = useState('');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
+  useEffect(() => setSelectedIds([]), [level]);
   function edit(item?: PrepositionGameItem) {
     setEditingId(item?.id ?? null);
     setForm(
@@ -221,18 +224,49 @@ export function PrepositionsPanel({
           {message}
         </p>
       )}
+      <BulkLevelMover
+        table="preposition_game_content"
+        currentLevel={level}
+        selectedIds={selectedIds}
+        onMoved={async () => {
+          setSelectedIds([]);
+          await reload();
+        }}
+      />
       <div className="mt-5 overflow-hidden rounded-2xl border bg-white">
+        {!!items.length && (
+          <div className="flex items-center gap-3 border-b bg-[#f8faf7] px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#748078]">
+            <SelectionCheckbox
+              checked={selectedIds.length === items.length}
+              onChange={(checked) =>
+                setSelectedIds(checked ? items.map((item) => item.id) : [])
+              }
+              label="Select all preposition questions"
+            />
+            Select all {level} questions
+          </div>
+        )}
         {!items.length && (
           <p className="px-5 py-8 text-center text-sm text-[#718077]">
             No {level} questions yet. Add one or import a TXT file.
           </p>
         )}
         {items.map((item) => (
-          <button
+          <div
             key={item.id}
-            onClick={() => edit(item)}
-            className="grid w-full grid-cols-[1fr_110px_50px] items-center gap-4 border-b px-5 py-4 text-left last:border-0 hover:bg-[#f8faf7]"
+            className="grid w-full grid-cols-[24px_1fr_110px_50px] items-center gap-4 border-b px-5 py-4 text-left last:border-0 hover:bg-[#f8faf7]"
           >
+            <SelectionCheckbox
+              checked={selectedIds.includes(item.id)}
+              onChange={(checked) =>
+                setSelectedIds((current) =>
+                  checked
+                    ? [...current, item.id]
+                    : current.filter((id) => id !== item.id),
+                )
+              }
+              label={`Select ${item.correct_answer}`}
+            />
             <span>
               <strong>{item.prompt.replace('___', item.correct_answer)}</strong>
               <span className="mt-1 block text-xs text-[#718077]">
@@ -241,8 +275,15 @@ export function PrepositionsPanel({
               </span>
             </span>
             <span className="text-xs font-medium">{item.reference_type}</span>
-            <Pencil size={16} />
-          </button>
+            <button
+              type="button"
+              onClick={() => edit(item)}
+              aria-label={`Edit ${item.correct_answer}`}
+              className="grid size-9 place-items-center rounded-lg text-[#718077] hover:bg-[#edf3ec]"
+            >
+              <Pencil size={16} />
+            </button>
+          </div>
         ))}
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
