@@ -48,7 +48,7 @@ import {
   usernameError,
 } from '@/lib/username-auth';
 
-const APP_VERSION = '0.45.0';
+const APP_VERSION = '0.46.0';
 const STORAGE_KEY = 'lernzeit-blockers-v1';
 type Blocker = {
   id: string;
@@ -63,6 +63,16 @@ type Blocker = {
   battleId?: string | null;
   startsAt?: string;
   endsAt?: string;
+  tentative?: boolean;
+};
+type OpenBattle = {
+  id: string;
+  level: string;
+  question_count: number;
+  response_time_seconds: number;
+  scheduled_for: string;
+  organizer_name: string;
+  player_count: number;
 };
 const INITIAL_WEEK = startOfWeek(new Date(), { weekStartsOn: 1 });
 const INITIAL_BLOCKERS: Blocker[] = [
@@ -190,9 +200,43 @@ function collapseCompletedBattlesByHour(items: Blocker[]) {
       best.get(`${item.date}-${item.start.slice(0, 2)}`)?.id === item.id,
   );
 }
+function openBattleToBlocker(battle: OpenBattle): Blocker {
+  const starts = new Date(battle.scheduled_for);
+  const durationMinutes = Math.max(
+    15,
+    Math.ceil(
+      (battle.question_count * battle.response_time_seconds + 300) / 60,
+    ),
+  );
+  const ends = new Date(starts.getTime() + durationMinutes * 60_000);
+  return {
+    id: `tentative-${battle.id}`,
+    name: `Tentative · ${battle.organizer_name}'s ${battle.level} battle`,
+    date: starts.toLocaleDateString('en-CA', { timeZone: 'Europe/Vienna' }),
+    start: starts.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Europe/Vienna',
+    }),
+    end: ends.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Europe/Vienna',
+    }),
+    kind: 'busy',
+    source: 'open-battle',
+    battleId: battle.id,
+    startsAt: starts.toISOString(),
+    endsAt: ends.toISOString(),
+    tentative: true,
+  };
+}
 
 export default function Home() {
   const [blockers, setBlockers] = useState<Blocker[]>(INITIAL_BLOCKERS);
+  const [openBattles, setOpenBattles] = useState<OpenBattle[]>([]);
   const [addOpen, setAddOpen] = useState(false);
   const [editingBlocker, setEditingBlocker] = useState<Blocker | null>(null);
   const [selectedBattle, setSelectedBattle] = useState<Blocker | null>(null);
@@ -255,18 +299,35 @@ export default function Home() {
     return () => data.subscription.unsubscribe();
   }, []);
   useEffect(() => {
-    if (!user) return;
-    void supabase
-      .from('learning_blocks')
-      .select('*')
-      .gte('starts_at', startOfDay(weekStart).toISOString())
-      .lt('starts_at', startOfDay(weekEnd).toISOString())
-      .order('starts_at')
-      .then(({ data }) => {
-        setBlockers(
-          collapseCompletedBattlesByHour((data ?? []).map(rowToBlocker)),
-        );
-      });
+    if (!user) {
+      setOpenBattles([]);
+      return;
+    }
+    let cancelled = false;
+    async function loadPlan() {
+      const [blocksResult, battlesResult] = await Promise.all([
+        supabase
+          .from('learning_blocks')
+          .select('*')
+          .gte('starts_at', startOfDay(weekStart).toISOString())
+          .lt('starts_at', startOfDay(weekEnd).toISOString())
+          .order('starts_at'),
+        supabase.rpc('browse_open_contests'),
+      ]);
+      if (cancelled) return;
+      setBlockers(
+        collapseCompletedBattlesByHour(
+          (blocksResult.data ?? []).map(rowToBlocker),
+        ),
+      );
+      setOpenBattles((battlesResult.data ?? []) as OpenBattle[]);
+    }
+    void loadPlan();
+    const timer = window.setInterval(() => void loadPlan(), 30_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
   }, [user, weekStart]);
   useEffect(() => {
     const context = (
@@ -340,6 +401,22 @@ export default function Home() {
         ),
     [blockers, days],
   );
+  const calendarItems = useMemo(() => {
+    const scheduledBattleIds = new Set(
+      blockers
+        .filter((item) => item.source === 'battle' && item.battleId)
+        .map((item) => item.battleId),
+    );
+    const now = Date.now();
+    const tentative = openBattles
+      .filter(
+        (battle) =>
+          new Date(battle.scheduled_for).getTime() > now &&
+          !scheduledBattleIds.has(battle.id),
+      )
+      .map(openBattleToBlocker);
+    return [...blockers, ...tentative];
+  }, [blockers, openBattles]);
   const weekLabel = `${format(weekStart, 'MMM d')} – ${format(addDays(weekStart, 6), 'MMM d, yyyy')}`;
   async function addBlocker() {
     if (!name.trim() || minutes(end) <= minutes(start)) {
@@ -640,6 +717,10 @@ export default function Home() {
                   <i className="size-2.5 rounded-full bg-[#cbd3ce]" />
                   Busy
                 </span>
+                <span className="flex items-center gap-2">
+                  <i className="size-2.5 rounded-full border border-[#9ca3af] bg-[#e5e7eb]" />
+                  Tentative battle
+                </span>
               </div>
             </div>
             <div className="max-h-[720px] overflow-auto">
@@ -683,7 +764,7 @@ export default function Home() {
                         className={`relative border-l border-[#e8ece6] ${today ? 'bg-[#f0f7f2]/55' : ''}`}
                         onDoubleClick={() => openNewBlocker(dayIndex)}
                       >
-                        {blockers
+                        {calendarItems
                           .filter((item) => item.date === day.iso)
                           .map((item) => {
                             const top = minutes(item.start);
@@ -728,6 +809,22 @@ export default function Home() {
                                 >
                                   {content}
                                 </button>
+                              );
+                            }
+                            if (
+                              item.source === 'open-battle' &&
+                              item.battleId
+                            ) {
+                              return (
+                                <a
+                                  key={item.id}
+                                  title="Tentative open battle · Open registration"
+                                  href={`./contest.html?battle=${encodeURIComponent(item.battleId)}`}
+                                  className="battle-event battle-event--tentative absolute left-1.5 right-1.5 cursor-pointer overflow-hidden rounded-lg border px-2 py-1.5 text-left transition hover:brightness-95"
+                                  style={{ top, height }}
+                                >
+                                  {content}
+                                </a>
                               );
                             }
                             return item.kind === 'learning' &&
@@ -799,8 +896,8 @@ export default function Home() {
                 <div>
                   <h2 className="font-semibold">Battle calendar</h2>
                   <p className="mt-0.5 text-xs leading-relaxed text-[#718077]">
-                    Battles are added automatically when you create or join
-                    them.
+                    Future open battles appear as tentative events. Select one
+                    to open its registration page.
                   </p>
                 </div>
               </div>
@@ -816,6 +913,9 @@ export default function Home() {
                 </span>
                 <span className="battle-legend battle-event--standard">
                   4th+ · Standard
+                </span>
+                <span className="battle-legend battle-event--tentative col-span-2">
+                  Tentative · Open registration
                 </span>
               </div>
               <p className="mt-4 text-xs leading-relaxed text-[#718077]">

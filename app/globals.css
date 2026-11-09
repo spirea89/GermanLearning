@@ -352,8 +352,13 @@ html[data-theme="classic"] .battle-lobby-panel [class~="bg-[#6d4aff]"] { backgro
 .battle-event--silver { border-color:#9ba4ae !important; background:linear-gradient(135deg,#f7f9fb,#c9d0d8) !important; color:#303942 !important; }
 .battle-event--bronze { border-color:#a8663c !important; background:linear-gradient(135deg,#f4cfb3,#b9784e) !important; color:#4c2715 !important; }
 .battle-event--standard { border-color:#7c6db2 !important; background:#eeeafb !important; color:#423474 !important; }
+.battle-event--tentative { border-color:#9ca3af !important; border-style:dashed !important; background:repeating-linear-gradient(135deg,#f3f4f6 0,#f3f4f6 8px,#e5e7eb 8px,#e5e7eb 16px) !important; color:#4b5563 !important; opacity:.82; }
+.battle-event--tentative:hover { opacity:1; }
 html[data-theme="arcade"] .battle-event--standard { border-color:#7563bd !important; background:#29204f !important; color:#fff !important; }
+html[data-theme="arcade"] .battle-event--tentative { border-color:#a1a1aa !important; background:repeating-linear-gradient(135deg,#27272a 0,#27272a 8px,#3f3f46 8px,#3f3f46 16px) !important; color:#fafafa !important; }
 html[data-theme="classic"] .battle-event--standard { border-color:#9c783f !important; background:#f1e4cf !important; color:#493324 !important; }
+html[data-theme="classic"] .battle-event--tentative { border-color:#9a8d7a !important; background:repeating-linear-gradient(135deg,#eeeae2 0,#eeeae2 8px,#ddd6ca 8px,#ddd6ca 16px) !important; color:#514a41 !important; }
+html[data-theme="black"] .battle-event--tentative { border-color:#a3a3a3 !important; background:repeating-linear-gradient(135deg,#171717 0,#171717 8px,#2e2e2e 8px,#2e2e2e 16px) !important; color:#fafafa !important; }
 html[data-theme="black"] :is(.battle-event,.battle-legend) { box-shadow:none; }
 
 /* A compact geographic tile map of Germany's 16 federal states. */

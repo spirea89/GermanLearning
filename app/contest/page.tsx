@@ -31,7 +31,7 @@ import {
   usernameError,
 } from '@/lib/username-auth';
 
-const APP_VERSION = '0.45.0',
+const APP_VERSION = '0.46.0',
   STORAGE = 'lernzeit-active-contest';
 type MapType = 'germany' | 'vienna';
 type StartMode = 'now' | 'later';
@@ -125,6 +125,7 @@ export default function ContestPage() {
     [questions, setQuestions] = useState<Question[]>([]),
     [awards, setAwards] = useState<RegionAward[]>([]),
     [openBattles, setOpenBattles] = useState<OpenBattle[]>([]),
+    [requestedBattleId, setRequestedBattleId] = useState<string | null>(null),
     [catalogGames, setCatalogGames] = useState<CatalogGame[]>([]),
     [selectedGameKeys, setSelectedGameKeys] = useState<string[]>([]),
     [name, setName] = useState(''),
@@ -186,6 +187,13 @@ export default function ContestPage() {
       setUser(data.user);
       if (data.user) {
         setName(accountUsername(data.user));
+        const requested = new URLSearchParams(window.location.search).get(
+          'battle',
+        );
+        if (requested) {
+          setRequestedBattleId(requested);
+          return;
+        }
         const saved = localStorage.getItem(STORAGE);
         if (saved) {
           setContestId(saved);
@@ -209,6 +217,12 @@ export default function ContestPage() {
     const timer = window.setInterval(() => void browse(), 3000);
     return () => clearInterval(timer);
   }, [user, contestId, browse]);
+  useEffect(() => {
+    if (!requestedBattleId || !openBattles.length) return;
+    document
+      .getElementById(`open-battle-${requestedBattleId}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [requestedBattleId, openBattles]);
   useEffect(() => {
     let cancelled = false;
     void Promise.all([
@@ -747,7 +761,7 @@ export default function ContestPage() {
               </Button>
             </Card>
           </div>
-          <section className="mt-10">
+          <section id="open-battles" className="mt-10">
             <div className="flex items-end justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#6b55ad]">
@@ -766,7 +780,8 @@ export default function ContestPage() {
                 {openBattles.map((battle) => (
                   <article
                     key={battle.id}
-                    className="flex flex-col justify-between gap-4 rounded-2xl border bg-white p-4 sm:flex-row sm:items-center"
+                    id={`open-battle-${battle.id}`}
+                    className={`flex flex-col justify-between gap-4 rounded-2xl border bg-white p-4 transition sm:flex-row sm:items-center ${requestedBattleId === battle.id ? 'ring-4 ring-[#6d4aff]/30 ring-offset-2' : ''}`}
                   >
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
@@ -774,6 +789,11 @@ export default function ContestPage() {
                           {battle.level}
                         </span>
                         <strong>{battle.organizer_name}&apos;s battle</strong>
+                        {requestedBattleId === battle.id && (
+                          <span className="rounded-full bg-[#fff1c7] px-2.5 py-1 text-xs font-semibold text-[#7b5a20]">
+                            Selected from your plan
+                          </span>
+                        )}
                         {battle.is_organizer && (
                           <span className="rounded-full bg-[#e7f4eb] px-2.5 py-1 text-xs font-semibold text-[#257049]">
                             Your battle
