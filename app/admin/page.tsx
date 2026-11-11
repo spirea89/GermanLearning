@@ -32,6 +32,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 import type {
   GameItem,
+  NounCaseGameItem,
   PrepositionGameItem,
   RoomObjectItem,
   VerbGameItem,
@@ -40,8 +41,9 @@ import { VerbsPanel } from './verbs-panel';
 import { PrepositionsPanel } from './prepositions-panel';
 import { ObjectsPanel } from './objects-panel';
 import { BulkLevelMover, SelectionCheckbox } from './bulk-level-mover';
+import { NounCasesPanel } from './noun-cases-panel';
 
-const APP_VERSION = '0.47.0';
+const APP_VERSION = '0.48.0';
 const EMPTY_FORM = {
   phrase_before: '',
   target_word: '',
@@ -52,7 +54,12 @@ const EMPTY_FORM = {
   sort_order: 10,
 };
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
-type GameKey = 'opposites' | 'verb_past' | 'prepositions' | 'room_objects';
+type GameKey =
+  | 'opposites'
+  | 'verb_past'
+  | 'prepositions'
+  | 'room_objects'
+  | 'noun_cases';
 type CatalogGame = {
   game_key: GameKey;
   title: string;
@@ -81,6 +88,7 @@ export default function AdminPage() {
   const [verbs, setVerbs] = useState<VerbGameItem[]>([]);
   const [prepositions, setPrepositions] = useState<PrepositionGameItem[]>([]);
   const [roomObjects, setRoomObjects] = useState<RoomObjectItem[]>([]);
+  const [nounCases, setNounCases] = useState<NounCaseGameItem[]>([]);
   const [selectedOppositeIds, setSelectedOppositeIds] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -110,6 +118,7 @@ export default function AdminPage() {
       { data: verbContent },
       { data: prepositionContent },
       { data: objectContent },
+      { data: nounCaseContent },
       { data: catalog },
     ] = await Promise.all([
       supabase
@@ -138,6 +147,11 @@ export default function AdminPage() {
         .select('*')
         .eq('level', level)
         .order('sort_order'),
+      supabase
+        .from('noun_case_content')
+        .select('*')
+        .eq('level', level)
+        .order('sort_order'),
       supabase.from('practice_games').select('*').order('sort_order'),
     ]);
     setIsAdmin(!!admin);
@@ -145,6 +159,7 @@ export default function AdminPage() {
     setVerbs((verbContent ?? []) as VerbGameItem[]);
     setPrepositions((prepositionContent ?? []) as PrepositionGameItem[]);
     setRoomObjects((objectContent ?? []) as RoomObjectItem[]);
+    setNounCases((nounCaseContent ?? []) as NounCaseGameItem[]);
     setGameCatalog((catalog ?? []) as CatalogGame[]);
     setLoading(false);
   }
@@ -374,7 +389,9 @@ export default function AdminPage() {
                     ? 'Präpositionalobjekte'
                     : selectedGame === 'room_objects'
                       ? 'Was ist das? · Room objects'
-                      : 'Games'}
+                      : selectedGame === 'noun_cases'
+                        ? 'Artikel & Kasus'
+                        : 'Games'}
             </h1>
             <p className="mt-2 text-sm text-[#66736b]">
               {selectedGame
@@ -501,6 +518,12 @@ export default function AdminPage() {
               count={`${roomObjects.length} objects`}
               onClick={() => chooseGame('room_objects')}
             />
+            <GameButton
+              title="Artikel & Kasus"
+              meta={`${gameCatalog.find((game) => game.game_key === 'noun_cases')?.levels.join(', ') || 'No levels'} · Grammar`}
+              count={`${nounCases.length} exercises`}
+              onClick={() => chooseGame('noun_cases')}
+            />
           </div>
         ) : (
           <div className="mt-8">
@@ -601,6 +624,14 @@ export default function AdminPage() {
             ) : selectedGame === 'room_objects' ? (
               <ObjectsPanel
                 items={roomObjects}
+                level={contentLevel}
+                reload={async () => {
+                  await load(user, contentLevel);
+                }}
+              />
+            ) : selectedGame === 'noun_cases' ? (
+              <NounCasesPanel
+                items={nounCases}
                 level={contentLevel}
                 reload={async () => {
                   await load(user, contentLevel);

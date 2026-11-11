@@ -34,13 +34,19 @@ import {
   splitStemChange,
   splitVerbForm,
   type GameItem,
+  type NounCaseGameItem,
   type PrepositionGameItem,
   type RoomObjectItem,
   type VerbGameItem,
 } from '@/lib/game-content';
 
-const APP_VERSION = '0.47.0';
-type GameKey = 'opposites' | 'verb_past' | 'prepositions' | 'room_objects';
+const APP_VERSION = '0.48.0';
+type GameKey =
+  | 'opposites'
+  | 'verb_past'
+  | 'prepositions'
+  | 'room_objects'
+  | 'noun_cases';
 type VerbMode = 'forms' | 'sentences';
 type LevelMap = Record<GameKey, string[]>;
 type SelectedLevelMap = Record<GameKey, string>;
@@ -49,6 +55,7 @@ const DEFAULT_LEVELS: LevelMap = {
   verb_past: ['B1'],
   prepositions: ['B1'],
   room_objects: ['A1'],
+  noun_cases: ['A1', 'A2'],
 };
 function shuffle<T>(values: T[]) {
   const result = [...values];
@@ -132,6 +139,8 @@ export default function PracticePage() {
       PrepositionGameItem[]
     >(FALLBACK_PREPOSITIONS),
     [roomObjects, setRoomObjects] = useState<RoomObjectItem[]>([]);
+  const [nounCases, setNounCases] = useState<NounCaseGameItem[]>([]),
+    [nounCaseSequence, setNounCaseSequence] = useState<NounCaseGameItem[]>([]);
   const [game, setGame] = useState<GameKey | null>(null),
     [practiceLevel, setPracticeLevel] = useState('B1'),
     [availableLevels, setAvailableLevels] = useState<LevelMap>(DEFAULT_LEVELS),
@@ -140,6 +149,7 @@ export default function PracticePage() {
       verb_past: 'B1',
       prepositions: 'B1',
       room_objects: 'A1',
+      noun_cases: 'A1',
     }),
     [verbMode, setVerbMode] = useState<VerbMode>('forms'),
     [index, setIndex] = useState(0),
@@ -155,6 +165,7 @@ export default function PracticePage() {
   const opposite = oppositeSequence[index % oppositeSequence.length],
     verb = verbSequence[index % verbSequence.length],
     preposition = prepositionSequence[index % prepositionSequence.length],
+    nounCase = nounCaseSequence[index % Math.max(nounCaseSequence.length, 1)],
     pronounIndex = index % PRONOUNS.length;
   const expectedPreterite =
       verbMode === 'sentences'
@@ -169,7 +180,9 @@ export default function PracticePage() {
       ? verbSequence.length
       : game === 'prepositions'
         ? prepositionSequence.length
-        : oppositeSequence.length;
+        : game === 'noun_cases'
+          ? nounCaseSequence.length
+          : oppositeSequence.length;
   useEffect(() => {
     void Promise.all([
       supabase
@@ -194,18 +207,25 @@ export default function PracticePage() {
         .eq('active', true)
         .order('sort_order'),
       supabase
+        .from('noun_case_content')
+        .select('*')
+        .eq('active', true)
+        .order('sort_order'),
+      supabase
         .from('practice_games')
         .select('game_key,levels')
         .eq('active', true),
-    ]).then(([a, b, c, d, configured]) => {
+    ]).then(([a, b, c, d, e, configured]) => {
       const loadedOpposites = (a.data ?? []) as GameItem[];
       const loadedVerbs = (b.data ?? []) as VerbGameItem[];
       const loadedPrepositions = (c.data ?? []) as PrepositionGameItem[];
       const loadedRoomObjects = (d.data ?? []) as RoomObjectItem[];
+      const loadedNounCases = (e.data ?? []) as NounCaseGameItem[];
       if (!a.error) setOpposites(loadedOpposites);
       if (!b.error) setVerbs(loadedVerbs);
       if (!c.error) setPrepositions(loadedPrepositions);
       if (!d.error) setRoomObjects(loadedRoomObjects);
+      if (!e.error) setNounCases(loadedNounCases);
 
       const rows = (configured.data ?? []) as {
         game_key: GameKey;
@@ -218,6 +238,7 @@ export default function PracticePage() {
           ...new Set(loadedPrepositions.map((item) => item.level)),
         ],
         room_objects: [...new Set(loadedRoomObjects.map((item) => item.level))],
+        noun_cases: [...new Set(loadedNounCases.map((item) => item.level))],
       };
       const nextLevels = { ...DEFAULT_LEVELS };
       for (const key of Object.keys(nextLevels) as GameKey[]) {
@@ -242,6 +263,9 @@ export default function PracticePage() {
         room_objects: nextLevels.room_objects.includes(current.room_objects)
           ? current.room_objects
           : (nextLevels.room_objects[0] ?? ''),
+        noun_cases: nextLevels.noun_cases.includes(current.noun_cases)
+          ? current.noun_cases
+          : (nextLevels.noun_cases[0] ?? ''),
       }));
     });
   }, []);
@@ -357,6 +381,21 @@ export default function PracticePage() {
     setGame('room_objects');
     reset();
   }
+  function startNounCases() {
+    const level = selectedLevels.noun_cases;
+    const source = nounCases.filter((item) => item.level === level);
+    if (!source.length) return;
+    const weighted = source.flatMap((item) =>
+      Array.from(
+        { length: item.grammatical_case === 'Genitiv' ? 1 : 3 },
+        () => item,
+      ),
+    );
+    setNounCaseSequence(shuffle(weighted));
+    setPracticeLevel(level);
+    setGame('noun_cases');
+    reset();
+  }
   const complete =
     game === 'verb_past'
       ? !!answer.trim() && !!perfectAnswer.trim()
@@ -380,7 +419,9 @@ export default function PracticePage() {
           normalizeAnswer(
             game === 'opposites'
               ? opposite.opposite_word
-              : preposition.correct_answer,
+              : game === 'noun_cases'
+                ? nounCase.correct_answer
+                : preposition.correct_answer,
           );
     setResult(ok ? 'correct' : 'wrong');
     setAnswered((v) => v + 1);
@@ -405,6 +446,7 @@ export default function PracticePage() {
           verbs={verbs}
           prepositions={prepositions}
           roomObjects={roomObjects}
+          nounCases={nounCases}
           availableLevels={availableLevels}
           selectedLevels={selectedLevels}
           selectLevel={(key, level) =>
@@ -414,6 +456,7 @@ export default function PracticePage() {
           startVerbs={startVerbs}
           startPrepositions={startPrepositions}
           startRoomObjects={startRoomObjects}
+          startNounCases={startNounCases}
         />
       ) : game === 'room_objects' ? (
         <RoomExplorer
@@ -459,9 +502,11 @@ export default function PracticePage() {
                   ? 'Opposites'
                   : game === 'prepositions'
                     ? 'Prepositions & cases'
-                    : verbMode === 'forms'
-                      ? 'Both past forms'
-                      : 'Sentence context'}
+                    : game === 'noun_cases'
+                      ? 'Articles & cases'
+                      : verbMode === 'forms'
+                        ? 'Both past forms'
+                        : 'Sentence context'}
               </span>
               <span className="text-xs text-[#87928a]">
                 {index + 1} / {totalQuestions}
@@ -471,6 +516,8 @@ export default function PracticePage() {
               <OppositePrompt item={opposite} />
             ) : game === 'prepositions' ? (
               <PrepositionPrompt item={preposition} />
+            ) : game === 'noun_cases' ? (
+              <NounCasePrompt item={nounCase} level={practiceLevel} />
             ) : verbMode === 'forms' ? (
               <>
                 <p className="mt-10 text-sm font-medium text-[#718077]">
@@ -590,6 +637,15 @@ export default function PracticePage() {
                       Answer: {preposition.response_example}
                     </span>
                   </>
+                ) : game === 'noun_cases' ? (
+                  <>
+                    <span className="font-semibold">
+                      {nounCase.prompt.split('___')[0]}
+                      <InflectedDeterminer item={nounCase} />
+                      {nounCase.prompt.split('___')[1]}
+                    </span>
+                    <span className="mt-1 block">{nounCase.explanation}</span>
+                  </>
                 ) : (
                   <strong>{opposite.opposite_word}</strong>
                 )}
@@ -611,7 +667,9 @@ export default function PracticePage() {
                   ? startOpposites()
                   : game === 'prepositions'
                     ? startPrepositions()
-                    : startVerbs(verbMode)
+                    : game === 'noun_cases'
+                      ? startNounCases()
+                      : startVerbs(verbMode)
               }
             >
               <RotateCcw />
@@ -697,6 +755,62 @@ function PrepositionPrompt({ item }: { item: PrepositionGameItem }) {
       <p className="mt-3 text-3xl">{item.prompt.replace('___', '………………')}</p>
       <p className="mt-3 text-sm text-[#718077]">{item.english_translation}</p>
     </>
+  );
+}
+function NounCasePrompt({
+  item,
+  level,
+}: {
+  item: NounCaseGameItem;
+  level: string;
+}) {
+  const showArticleHint = level === 'A1' || level === 'A2';
+  return (
+    <>
+      <div className="mt-8 flex flex-wrap gap-2">
+        <span className="rounded-full bg-[#fce8ef] px-3 py-1 text-xs font-semibold text-[#9b3158]">
+          {item.grammatical_case}
+        </span>
+        <span className="rounded-full bg-[#e7eefb] px-3 py-1 text-xs font-semibold text-[#315c9a]">
+          {item.determiner_type}
+        </span>
+      </div>
+      <p className="mt-5 text-sm text-[#718077]">
+        Complete the noun group with the correct form.
+      </p>
+      <p className="mt-3 text-3xl leading-relaxed">
+        {item.prompt.replace('___', '………………')}
+      </p>
+      {showArticleHint && (
+        <p className="mt-3 text-sm font-semibold text-[#5b45a1]">
+          Article hint: ({item.base_article} {item.noun})
+        </p>
+      )}
+      <p className="mt-3 text-sm text-[#718077]">{item.english_translation}</p>
+    </>
+  );
+}
+function InflectedDeterminer({ item }: { item: NounCaseGameItem }) {
+  const answer = item.correct_answer;
+  const lower = answer.toLocaleLowerCase('de-DE');
+  const definiteEndings: Record<string, string> = {
+    der: 'er',
+    die: 'ie',
+    das: 'as',
+    den: 'en',
+    dem: 'em',
+    des: 'es',
+  };
+  const ending =
+    item.determiner_type === 'definite'
+      ? (definiteEndings[lower] ?? '')
+      : (lower.match(/(en|em|er|es|e)$/)?.[1] ?? '');
+  if (!ending) return <strong>{answer}</strong>;
+  return (
+    <strong>
+      {answer.slice(0, -ending.length)}
+      <span className="text-red-600">{answer.slice(-ending.length)}</span>
+    </strong>
   );
 }
 function AnswerField({
@@ -981,6 +1095,7 @@ function Catalog({
   verbs,
   prepositions,
   roomObjects,
+  nounCases,
   availableLevels,
   selectedLevels,
   selectLevel,
@@ -988,11 +1103,13 @@ function Catalog({
   startVerbs,
   startPrepositions,
   startRoomObjects,
+  startNounCases,
 }: {
   opposites: GameItem[];
   verbs: VerbGameItem[];
   prepositions: PrepositionGameItem[];
   roomObjects: RoomObjectItem[];
+  nounCases: NounCaseGameItem[];
   availableLevels: LevelMap;
   selectedLevels: SelectedLevelMap;
   selectLevel: (key: GameKey, level: string) => void;
@@ -1000,6 +1117,7 @@ function Catalog({
   startVerbs: (m: VerbMode) => void;
   startPrepositions: () => void;
   startRoomObjects: () => void;
+  startNounCases: () => void;
 }) {
   const oppositeCount = opposites.filter(
     (item) => item.level === selectedLevels.opposites,
@@ -1013,6 +1131,9 @@ function Catalog({
   ).length;
   const roomObjectCount = roomObjects.filter(
     (item) => item.level === selectedLevels.room_objects,
+  ).length;
+  const nounCaseCount = nounCases.filter(
+    (item) => item.level === selectedLevels.noun_cases,
   ).length;
   return (
     <section className="mx-auto max-w-6xl px-5 py-10 md:px-8">
@@ -1098,6 +1219,21 @@ function Catalog({
           />
           <Button onClick={startRoomObjects} disabled={!roomObjectCount}>
             Enter the house
+          </Button>
+        </GameCard>
+        <GameCard
+          title="Artikel & Kasus"
+          meta={`Grammar · ${nounCaseCount} sentence exercises`}
+          description="Choose the correct article or possessive ending for Nominativ, Akkusativ, Dativ, and Genitiv."
+        >
+          <LevelPicker
+            game="noun_cases"
+            levels={availableLevels.noun_cases}
+            value={selectedLevels.noun_cases}
+            onChange={selectLevel}
+          />
+          <Button onClick={startNounCases} disabled={!nounCaseCount}>
+            Practise cases
           </Button>
         </GameCard>
         <GameCard

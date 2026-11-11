@@ -46,6 +46,21 @@ export type PrepositionGameItem = {
   sort_order: number;
 };
 
+export type NounCaseGameItem = {
+  id: string;
+  level: string;
+  prompt: string;
+  correct_answer: string;
+  base_article: 'der' | 'die' | 'das';
+  noun: string;
+  grammatical_case: 'Nominativ' | 'Akkusativ' | 'Dativ' | 'Genitiv';
+  determiner_type: 'definite' | 'indefinite' | 'possessive';
+  english_translation: string;
+  explanation: string;
+  active: boolean;
+  sort_order: number;
+};
+
 export type RoomObjectItem = {
   id: string;
   inventory_id?: string;

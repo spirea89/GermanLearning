@@ -10,7 +10,8 @@ type ContentTable =
   | 'game_content'
   | 'verb_game_content'
   | 'preposition_game_content'
-  | 'room_object_content';
+  | 'room_object_content'
+  | 'noun_case_content';
 
 export function BulkLevelMover({
   table,

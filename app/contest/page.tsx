@@ -31,7 +31,7 @@ import {
   usernameError,
 } from '@/lib/username-auth';
 
-const APP_VERSION = '0.47.0',
+const APP_VERSION = '0.48.0',
   STORAGE = 'lernzeit-active-contest';
 type MapType = 'germany' | 'vienna';
 type StartMode = 'now' | 'later';
@@ -255,6 +255,12 @@ export default function ContestPage() {
         .eq('level', level)
         .eq('active', true)
         .limit(1),
+      supabase
+        .from('noun_case_content')
+        .select('id')
+        .eq('level', level)
+        .eq('active', true)
+        .limit(1),
     ]).then(
       ([
         gamesResult,
@@ -262,6 +268,7 @@ export default function ContestPage() {
         prepositionsResult,
         verbsResult,
         objectsResult,
+        nounCasesResult,
       ]) => {
         if (cancelled) return;
         const verbs = verbsResult.data ?? [];
@@ -278,6 +285,7 @@ export default function ContestPage() {
         if (verbs.length) contentAvailable.add('verb_past_forms');
         if (hasCompleteSentences) contentAvailable.add('verb_past_sentences');
         if (objectsResult.data?.length) contentAvailable.add('room_objects');
+        if (nounCasesResult.data?.length) contentAvailable.add('noun_cases');
 
         const available = ((gamesResult.data ?? []) as CatalogGame[])
           .filter((game) => game.levels.includes(level))
