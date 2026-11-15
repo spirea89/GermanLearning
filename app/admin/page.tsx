@@ -43,7 +43,7 @@ import { ObjectsPanel } from './objects-panel';
 import { BulkLevelMover, SelectionCheckbox } from './bulk-level-mover';
 import { NounCasesPanel } from './noun-cases-panel';
 
-const APP_VERSION = '0.48.0';
+const APP_VERSION = '0.49.0';
 const EMPTY_FORM = {
   phrase_before: '',
   target_word: '',

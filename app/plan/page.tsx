@@ -48,7 +48,7 @@ import {
   usernameError,
 } from '@/lib/username-auth';
 
-const APP_VERSION = '0.48.0';
+const APP_VERSION = '0.49.0';
 const STORAGE_KEY = 'lernzeit-blockers-v1';
 type Blocker = {
   id: string;
@@ -488,12 +488,12 @@ export default function Home() {
   async function sendBattleToCalendar() {
     if (!selectedBattle?.startsAt || !selectedBattle.endsAt) return;
     const description = selectedBattle.battleRank
-      ? `Lernzeit German Battle result: rank ${selectedBattle.battleRank}, ${selectedBattle.battleScore ?? 0} regions conquered.`
-      : 'Scheduled Lernzeit German Battle.';
+      ? `Lernzeit Language Battle result: rank ${selectedBattle.battleRank}, ${selectedBattle.battleScore ?? 0} regions conquered.`
+      : 'Scheduled Lernzeit Language Battle.';
     const content = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//Lernzeit//German Battle//EN',
+      'PRODID:-//Lernzeit//Language Battle//EN',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
       'BEGIN:VEVENT',
@@ -798,7 +798,7 @@ export default function Home() {
                                   title={
                                     item.battleRank
                                       ? `Battle result: rank ${item.battleRank}`
-                                      : 'Scheduled German Battle'
+                                      : 'Scheduled Language Battle'
                                   }
                                   onClick={() => {
                                     setSelectedBattle(item);

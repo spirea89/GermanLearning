@@ -40,7 +40,7 @@ import {
   type VerbGameItem,
 } from '@/lib/game-content';
 
-const APP_VERSION = '0.48.0';
+const APP_VERSION = '0.49.0';
 type GameKey =
   | 'opposites'
   | 'verb_past'
@@ -1238,7 +1238,7 @@ function Catalog({
         </GameCard>
         <GameCard
           blue
-          title="German Battle"
+          title="Language Battle"
           meta="Multiplayer · Up to 10 players"
           description="Create a mixed contest or join friends with a battle code."
         >

@@ -31,7 +31,7 @@ import {
   usernameError,
 } from '@/lib/username-auth';
 
-const APP_VERSION = '0.48.0',
+const APP_VERSION = '0.49.0',
   STORAGE = 'lernzeit-active-contest';
 type MapType = 'germany' | 'vienna';
 type StartMode = 'now' | 'later';
@@ -578,7 +578,7 @@ export default function ContestPage() {
             <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#6b55ad]">
               Multiplayer
             </p>
-            <h1 className="mt-2 text-4xl font-semibold">German Battle</h1>
+            <h1 className="mt-2 text-4xl font-semibold">Language Battle</h1>
             <p className="mt-2 text-[#718077]">
               Create a private room or open your lobby to every learner online.
             </p>
@@ -911,7 +911,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           </a>
           <span className="flex items-center gap-2 font-semibold text-[#5b45a1]">
             <Swords size={18} />
-            German Battle
+            Language Battle
           </span>
         </div>
       </header>
